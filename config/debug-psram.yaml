@@ -1,0 +1,6 @@
+sensor:
+  - platform: debug
+    psram:
+      id: debug_free_psram
+      name: "Free PSRAM"
+      entity_category: DIAGNOSTIC

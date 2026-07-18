@@ -1,0 +1,200 @@
+substitutions:
+  name: "comfoair"
+  friendly_name: "ComfoAir"
+  log_level: "INFO"
+
+packages:
+  base: !include config/base.yaml
+  device: !include config/esp32-s3-n16r8.yaml
+  bluetooth_proxy: !include config/bluetooth-proxy.yaml
+  comfoair: !include config/comfoair-base.yaml
+  # Optional packages
+  # with_private_wifi: !include config/base-with-preset-wifi.yaml
+  # debug: !include config/debug.yaml
+  # debug_psram: !include config/debug-psram.yaml
+
+esphome:
+  on_boot:
+    - priority: 375.0
+      then:
+        # RGB status LED boot sequence
+        - script.execute: show_led_status
+
+wifi:
+  on_connect:
+    then:
+      - script.execute: on_wifi_connect
+  on_disconnect:
+    then:
+      - script.execute: show_led_status
+
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: rgb_status_led
+    name: RGB Status LED
+    icon: "mdi:led-on"
+    restore_mode: ALWAYS_OFF
+    rgb_order: GRB
+    pin: GPIO2
+    num_leds: 1
+    chipset: ws2812
+    use_psram: true
+    rmt_symbols: 144
+    gamma_correct: 1
+    color_correct: [10%, 10%, 10%] # Reduce brightness to 10%
+    default_transition_length: 1s
+    effects:
+      - lambda:
+          name: pulse
+          update_interval: 250ms
+          lambda: |-
+            static bool on_ = true;
+            auto call = id(rgb_status_led).make_call();
+            
+            call.set_state(true);
+            call.set_brightness(on_ ? 1.0 : 0);
+            call.set_transition_length(250);
+            on_ = !on_;
+            
+            // don't tell HA every change
+            call.set_publish(false);
+            call.set_save(false);
+            call.perform();
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    id: boot_button
+    name: "Boot Button"
+    internal: true
+    on_click:
+      - min_length: 50ms
+        max_length: 1500ms
+        then:
+          - script.stop: show_led_status
+          - script.stop: on_wifi_connect
+          - lambda: |-
+              auto current_mode = id(comfoair_180).fan_mode.value_or(climate::CLIMATE_FAN_OFF);
+              auto call = id(comfoair_180).make_call();
+              if (current_mode == climate::CLIMATE_FAN_LOW) {
+                call.set_fan_mode(climate::CLIMATE_FAN_MEDIUM);
+                call.perform();
+                id(indicate_fan_level).execute(2);
+              } else if (current_mode == climate::CLIMATE_FAN_MEDIUM) {
+                call.set_fan_mode(climate::CLIMATE_FAN_HIGH);
+                call.perform();
+                id(indicate_fan_level).execute(3);
+              } else {
+                call.set_fan_mode(climate::CLIMATE_FAN_LOW);
+                call.perform();
+                id(indicate_fan_level).execute(1);
+              }
+      - min_length: 5000ms
+        max_length: 15000ms
+        then:
+          - script.stop: show_led_status
+          - script.stop: on_wifi_connect
+          - script.stop: indicate_fan_level
+          - logger.log: "Boot Button long pressed: Show RED LED for 5s, then perform factory reset"
+          - light.turn_on:
+              id: rgb_status_led
+              red: 100%
+              green: 0%
+              blue: 0%
+          - delay: 5s
+          - button.press: factory_reset_btn
+
+script:
+  - id: indicate_fan_level
+    mode: restart
+    parameters:
+      pulses: int
+    then:
+      - script.stop: show_led_status
+      - script.stop: on_wifi_connect
+      - logger.log: "LED: Fan level indicator - BLUE fast pulse"
+      - light.turn_on:
+          id: rgb_status_led
+          effect: pulse
+          red: 0%
+          green: 0%
+          blue: 100%
+      - delay: !lambda "return pulses * 500;"
+      - script.execute: show_led_status
+
+  - id: show_led_status
+    mode: restart
+    then:
+      - script.stop: indicate_fan_level
+      - script.stop: on_wifi_connect
+      - if:
+          condition:
+            - lambda: return !id(wifi_id).is_connected() && !id(wifi_id).is_ap_active();
+          then:
+            - logger.log: "LED: WiFi disconnected & AP inactive - RED fast pulse"
+            - light.turn_on:
+                id: rgb_status_led
+                effect: pulse
+                red: 100%
+                green: 0%
+                blue: 0%
+            - wait_until:
+                condition:
+                  - lambda: return id(wifi_id).is_ap_active();
+            - script.execute: show_led_status
+          else:
+            - if:
+                condition:
+                  - lambda: return id(wifi_id).is_ap_active();
+                then:
+                  - logger.log: "LED: AP active - YELLOW fast pulse"
+                  - light.turn_on:
+                      id: rgb_status_led
+                      effect: pulse
+                      red: 100%
+                      green: 100%
+                      blue: 0%
+                  - wait_until:
+                      condition:
+                        - lambda: return !id(wifi_id).is_ap_active();
+                  - script.execute: show_led_status
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(filter_status).state == "Full" || id(filter_status).state == "full";
+                      then:
+                        - delay: 1s
+                        - logger.log: "LED: Filter full - PURPLE slow pulse"
+                        - light.turn_on:
+                            id: rgb_status_led
+                            effect: none
+                            red: 65%
+                            green: 0%
+                            blue: 100%
+                      else:
+                        - delay: 1s
+                        - logger.log: "LED: Normal status - Off"
+                        - light.turn_off:
+                            id: rgb_status_led
+                            transition_length: 250ms
+
+  - id: on_wifi_connect
+    mode: restart
+    then:
+      - script.stop: show_led_status
+      - script.stop: indicate_fan_level
+      - logger.log: "LED: WiFi connected - GREEN light for 10s"
+      - light.turn_on:
+          id: rgb_status_led
+          effect: none
+          red: 0%
+          green: 100%
+          blue: 0%
+      - delay: 10s
+      - script.execute: show_led_status

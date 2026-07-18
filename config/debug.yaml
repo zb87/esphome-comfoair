@@ -1,0 +1,34 @@
+debug:
+  update_interval: 5s
+
+sensor:
+  - platform: wifi_signal
+    id: debug_wifi_signal_db
+    update_interval: 60s
+    internal: True
+  - platform: copy
+    id: debug_wifi_signal
+    icon: "mdi:wifi"
+    source_id: debug_wifi_signal_db
+    name: "WiFi Signal"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: DIAGNOSTIC
+    device_class: ""
+  - platform: debug
+    free:
+      id: debug_heap_free
+      name: "Heap Free"
+      entity_category: DIAGNOSTIC
+    block:
+      id: debug_heap_max_block
+      name: "Heap Max Block"
+      entity_category: DIAGNOSTIC
+
+text_sensor:
+  - platform: debug
+    reset_reason:
+      name: "Restart Reason"
+      id: debug_restart_reason
+      entity_category: DIAGNOSTIC

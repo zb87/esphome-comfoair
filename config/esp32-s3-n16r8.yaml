@@ -1,0 +1,8 @@
+packages:
+  base: !include esp32-s3-base.yaml
+
+esp32:
+  flash_size: 16MB
+
+psram:
+  mode: octal

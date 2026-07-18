@@ -1,0 +1,46 @@
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  name_add_mac_suffix: false
+
+# Enable logging
+logger:
+  level: ${log_level}
+
+web_server:
+  port: 80
+  log: false
+  local: true
+  version: 3
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+wifi:
+  id: wifi_id
+  ap:
+
+captive_portal:
+
+improv_serial:
+
+button:
+  - platform: restart
+    id: restart_btn
+    name: "Restart Controller"
+  - platform: factory_reset
+    id: factory_reset_btn
+    name: Restore Factory Settings
+    entity_category: CONFIG
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Zurich
+
+sensor:
+  - platform: uptime
+    type: timestamp
+    name: "Last Boot Time"
