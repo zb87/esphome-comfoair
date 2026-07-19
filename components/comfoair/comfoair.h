@@ -671,26 +671,26 @@ protected:
       postheating_pwm_mode_present->publish_state(msg[4] & STATUS_OPT_POSTHEATING_PWM);
     }
 
-    if (p10_active != nullptr) { p10_active->publish_state(msg[6] & 0x01); }
-    if (p11_active != nullptr) { p11_active->publish_state(msg[6] & 0x02); }
-    if (p12_active != nullptr) { p12_active->publish_state(msg[6] & 0x04); }
-    if (p13_active != nullptr) { p13_active->publish_state(msg[6] & 0x08); }
-    if (p14_active != nullptr) { p14_active->publish_state(msg[6] & 0x10); }
-    if (p15_active != nullptr) { p15_active->publish_state(msg[6] & 0x20); }
-    if (p16_active != nullptr) { p16_active->publish_state(msg[6] & 0x40); }
-    if (p17_active != nullptr) { p17_active->publish_state(msg[6] & 0x80); }
+    if (p10_active != nullptr) { p10_active->publish_state(msg[6] & (1 << 0)); }
+    if (p11_active != nullptr) { p11_active->publish_state(msg[6] & (1 << 1)); }
+    if (p12_active != nullptr) { p12_active->publish_state(msg[6] & (1 << 2)); }
+    if (p13_active != nullptr) { p13_active->publish_state(msg[6] & (1 << 3)); }
+    if (p14_active != nullptr) { p14_active->publish_state(msg[6] & (1 << 4)); }
+    if (p15_active != nullptr) { p15_active->publish_state(msg[6] & (1 << 5)); }
+    if (p16_active != nullptr) { p16_active->publish_state(msg[6] & (1 << 6)); }
+    if (p17_active != nullptr) { p17_active->publish_state(msg[6] & (1 << 7)); }
 
-    if (p18_active != nullptr) { p18_active->publish_state(msg[7] & 0x01); }
-    if (p19_active != nullptr) { p19_active->publish_state(msg[7] & 0x02); }
+    if (p18_active != nullptr) { p18_active->publish_state(msg[7] & (1 << 0)); }
+    if (p19_active != nullptr) { p19_active->publish_state(msg[7] & (1 << 1)); }
 
-    if (p90_active != nullptr) { p90_active->publish_state(msg[8] & 0x01); }
-    if (p91_active != nullptr) { p91_active->publish_state(msg[8] & 0x02); }
-    if (p92_active != nullptr) { p92_active->publish_state(msg[8] & 0x04); }
-    if (p93_active != nullptr) { p93_active->publish_state(msg[8] & 0x08); }
-    if (p94_active != nullptr) { p94_active->publish_state(msg[8] & 0x10); }
-    if (p95_active != nullptr) { p95_active->publish_state(msg[8] & 0x20); }
-    if (p96_active != nullptr) { p96_active->publish_state(msg[8] & 0x40); }
-    if (p97_active != nullptr) { p97_active->publish_state(msg[8] & 0x80); }
+    if (p90_active != nullptr) { p90_active->publish_state(msg[8] & (1 << 0)); }
+    if (p91_active != nullptr) { p91_active->publish_state(msg[8] & (1 << 1)); }
+    if (p92_active != nullptr) { p92_active->publish_state(msg[8] & (1 << 2)); }
+    if (p93_active != nullptr) { p93_active->publish_state(msg[8] & (1 << 3)); }
+    if (p94_active != nullptr) { p94_active->publish_state(msg[8] & (1 << 4)); }
+    if (p95_active != nullptr) { p95_active->publish_state(msg[8] & (1 << 5)); }
+    if (p96_active != nullptr) { p96_active->publish_state(msg[8] & (1 << 6)); }
+    if (p97_active != nullptr) { p97_active->publish_state(msg[8] & (1 << 7)); }
 
     if (enthalpy_present != nullptr) {
       enthalpy_present->publish_state(msg[9]);
