@@ -5,6 +5,9 @@
 # Uncomment entries in comfoair-base.yaml to enable them.
 
 comfoair:
+  # === Options ===
+  # enable_fan_auto: true  # Enable CLIMATE_FAN_AUTO mode (default: false)
+
   # === Valve status (extended) ===
   preheating_state:
     name: "Preheating state"

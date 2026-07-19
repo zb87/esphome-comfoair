@@ -99,6 +99,8 @@ CONF_RF_HIGH_TIME_SHORT_MINUTES = "rf_high_time_short_minutes"
 CONF_RF_HIGH_TIME_LONG_MINUTES = "rf_high_time_long_minutes"
 CONF_EXTRACTOR_HOOD_SWITCH_OFF_DELAY_MINUTES = "extractor_hood_switch_off_delay_minutes"
 
+CONF_ENABLE_FAN_AUTO = "enable_fan_auto"
+
 helper_comfoair = {
     "sensor": [
         CONF_INTAKE_FAN_SPEED,
@@ -298,6 +300,7 @@ CONFIG_SCHEMA = cv.All(
             cv.GenerateID(CONF_ID): cv.declare_id(ComfoAirComponent),
             cv.Required(REQUIRED_KEY_NAME): cv.string,
             cv.Optional(CONF_PROXY_UART_ID): cv.use_id(uart),
+            cv.Optional(CONF_ENABLE_FAN_AUTO, default=False): cv.boolean,
         }
     )
     .extend(uart.UART_DEVICE_SCHEMA)
@@ -317,6 +320,8 @@ async def to_code(config):
     if CONF_PROXY_UART_ID in config:
         proxy_uart = await cg.get_variable(config[CONF_PROXY_UART_ID])
         cg.add(var.set_proxy_uart_component(proxy_uart))
+    if config.get(CONF_ENABLE_FAN_AUTO):
+        cg.add(var.set_enable_fan_auto(True))
     for k, values in helper_comfoair.items():
         for v in values:
             if not v in config:

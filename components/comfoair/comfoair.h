@@ -74,12 +74,14 @@ public:
     traits.set_visual_max_temperature(COMFOAIR_MAX_SUPPORTED_TEMP);
     traits.set_visual_temperature_step(COMFOAIR_SUPPORTED_TEMP_STEP);
     traits.set_supported_fan_modes({
-      // climate::CLIMATE_FAN_AUTO,
       climate::CLIMATE_FAN_LOW,
       climate::CLIMATE_FAN_MEDIUM,
       climate::CLIMATE_FAN_HIGH,
       climate::CLIMATE_FAN_OFF,
     });
+    if (enable_fan_auto_) {
+      traits.add_supported_fan_mode(climate::CLIMATE_FAN_AUTO);
+    }
     return traits;
   }
 
@@ -880,15 +882,7 @@ protected:
     }
   }
 
-  void get_temperature_() {
-    if (outside_air_temperature != nullptr ||
-        supply_air_temperature != nullptr ||
-        return_air_temperature != nullptr ||
-        outside_air_temperature != nullptr) {
-      ESP_LOGD(TAG, "getting temperature");
-      write_command_(CMD_GET_TEMPERATURE_STATUS, nullptr, 0);
-    }
-  }
+
 
   void get_sensor_data_() {
     if (enthalpy_temperature != nullptr) {
@@ -935,6 +929,7 @@ protected:
   uint8_t proxy_data_[30];
   uint8_t proxy_data_index_{0};
   bool encountered_seven_{false};
+  bool enable_fan_auto_{false};
   int16_t update_counter_{-4};
 
   uint8_t bootloader_version_[13]{0};
@@ -1095,6 +1090,7 @@ public:
   void set_rf_high_time_short_minutes(sensor::Sensor *rf_high_time_short_minutes) { this->rf_high_time_short_minutes = rf_high_time_short_minutes; };
   void set_rf_high_time_long_minutes(sensor::Sensor *rf_high_time_long_minutes) { this->rf_high_time_long_minutes = rf_high_time_long_minutes; };
   void set_extractor_hood_switch_off_delay_minutes(sensor::Sensor *extractor_hood_switch_off_delay_minutes) { this->extractor_hood_switch_off_delay_minutes = extractor_hood_switch_off_delay_minutes; };
+  void set_enable_fan_auto(bool enable) { this->enable_fan_auto_ = enable; };
 };
 
 }  // namespace comfoair
