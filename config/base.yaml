@@ -1,3 +1,6 @@
+substitutions:
+  timezone: "Europe/Zurich"
+
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -38,7 +41,7 @@ button:
 time:
   - platform: sntp
     id: sntp_time
-    timezone: Europe/Zurich
+    timezone: ${timezone}
 
 sensor:
   - platform: uptime

@@ -3,6 +3,3 @@ packages:
 
 esp32:
   flash_size: 16MB
-
-psram:
-  mode: octal
