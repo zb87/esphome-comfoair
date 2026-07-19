@@ -184,6 +184,27 @@ helper_comfoair = {
     ],
 }
 
+
+def make_sensor_schema(
+    device_class=DEVICE_CLASS_EMPTY,
+    unit_of_measurement=None,
+    accuracy_decimals=0,
+    state_class=STATE_CLASS_MEASUREMENT,
+):
+    kwargs = {
+        "device_class": device_class,
+        "accuracy_decimals": accuracy_decimals,
+        "state_class": state_class,
+    }
+    if unit_of_measurement is not None:
+        kwargs["unit_of_measurement"] = unit_of_measurement
+    return sensor.sensor_schema(**kwargs).extend()
+
+
+def make_binary_sensor_schema(device_class=DEVICE_CLASS_EMPTY):
+    return binary_sensor.binary_sensor_schema(device_class=device_class).extend()
+
+
 comfoair_sensors_schemas = cv.Schema(
     {
         cv.Optional(CONF_TYPE): text_sensor.text_sensor_schema(),
@@ -192,326 +213,84 @@ comfoair_sensors_schemas = cv.Schema(
         cv.Optional(CONF_FROST_PROTECTION_LEVEL): text_sensor.text_sensor_schema(),
         cv.Optional(CONF_PREHEATING_VALVE): text_sensor.text_sensor_schema(),
 
-        cv.Optional(CONF_INTAKE_FAN_SPEED): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_SPEED,
-            unit_of_measurement=UNIT_PERCENT,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_EXHAUST_FAN_SPEED): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_SPEED,
-            unit_of_measurement=UNIT_PERCENT,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_INTAKE_FAN_SPEED_RPM): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_SPEED,
-            unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_EXHAUST_FAN_SPEED_RPM): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_SPEED,
-            unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_VENTILATION_LEVEL): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_OUTSIDE_AIR_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_SUPPLY_AIR_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_RETURN_AIR_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_EXHAUST_AIR_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_ENTHALPY_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_EWT_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_REHEATING_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_KITCHEN_HOOD_TEMPERATURE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_TEMPERATURE,
-            unit_of_measurement=UNIT_CELSIUS,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_RETURN_AIR_LEVEL): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_VOLUME,
-            unit_of_measurement=UNIT_CUBIC_METER,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_SUPPLY_AIR_LEVEL): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_VOLUME,
-            unit_of_measurement=UNIT_CUBIC_METER,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_BYPASS_FACTOR): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_VOLUME,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_BYPASS_STEP): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_VOLUME,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_BYPASS_CORRECTION): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_VOLUME,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_BYPASS_OPEN_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_MOTOR_CURRENT_BYPASS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_CURRENT,
-            unit_of_measurement=UNIT_AMPERE,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_MOTOR_CURRENT_PREHEATING): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_CURRENT,
-            unit_of_measurement=UNIT_AMPERE,
-            accuracy_decimals=1,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
+        cv.Optional(CONF_INTAKE_FAN_SPEED): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT),
+        cv.Optional(CONF_EXHAUST_FAN_SPEED): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT),
+        cv.Optional(CONF_INTAKE_FAN_SPEED_RPM): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE),
+        cv.Optional(CONF_EXHAUST_FAN_SPEED_RPM): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE),
+        cv.Optional(CONF_VENTILATION_LEVEL): make_sensor_schema(),
+        cv.Optional(CONF_OUTSIDE_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_SUPPLY_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_RETURN_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_EXHAUST_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_ENTHALPY_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_EWT_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_REHEATING_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_KITCHEN_HOOD_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
+        cv.Optional(CONF_RETURN_AIR_LEVEL): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=1),
+        cv.Optional(CONF_SUPPLY_AIR_LEVEL): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=1),
+        cv.Optional(CONF_BYPASS_FACTOR): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME),
+        cv.Optional(CONF_BYPASS_STEP): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME),
+        cv.Optional(CONF_BYPASS_CORRECTION): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME),
+        cv.Optional(CONF_BYPASS_OPEN_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_MOTOR_CURRENT_BYPASS): make_sensor_schema(device_class=DEVICE_CLASS_CURRENT, unit_of_measurement=UNIT_AMPERE, accuracy_decimals=1),
+        cv.Optional(CONF_MOTOR_CURRENT_PREHEATING): make_sensor_schema(device_class=DEVICE_CLASS_CURRENT, unit_of_measurement=UNIT_AMPERE, accuracy_decimals=1),
 
-        cv.Optional(CONF_PREHEATING_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_LEVEL0_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_LEVEL1_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_LEVEL2_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_LEVEL3_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_FROST_PROTECTION_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_FROST_PROTECTION_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_MINUTE,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_FILTER_HOURS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_HOUR,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
+        cv.Optional(CONF_PREHEATING_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_LEVEL0_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_LEVEL1_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_LEVEL2_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_LEVEL3_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_FROST_PROTECTION_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
+        cv.Optional(CONF_FROST_PROTECTION_MINUTES): make_sensor_schema(unit_of_measurement=UNIT_MINUTE),
+        cv.Optional(CONF_FILTER_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
 
-        cv.Optional(CONF_BYPASS_VALVE): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_VOLUME,
-            unit_of_measurement=UNIT_PERCENT,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
+        cv.Optional(CONF_BYPASS_VALVE): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT),
 
-        cv.Optional(CONF_BATHROOM_SWITCH_ON_DELAY_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_BATHROOM_SWITCH_OFF_DELAY_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_L1_SWITCH_OFF_DELAY_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_BOOST_VENTILATION_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_FILTER_WARNING_WEEKS): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            unit_of_measurement=UNIT_WEEK,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_RF_HIGH_TIME_SHORT_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_RF_HIGH_TIME_LONG_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
-        cv.Optional(CONF_EXTRACTOR_HOOD_SWITCH_OFF_DELAY_MINUTES): sensor.sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY,
-            accuracy_decimals=0,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ).extend(),
+        cv.Optional(CONF_BATHROOM_SWITCH_ON_DELAY_MINUTES): make_sensor_schema(),
+        cv.Optional(CONF_BATHROOM_SWITCH_OFF_DELAY_MINUTES): make_sensor_schema(),
+        cv.Optional(CONF_L1_SWITCH_OFF_DELAY_MINUTES): make_sensor_schema(),
+        cv.Optional(CONF_BOOST_VENTILATION_MINUTES): make_sensor_schema(),
+        cv.Optional(CONF_FILTER_WARNING_WEEKS): make_sensor_schema(unit_of_measurement=UNIT_WEEK),
+        cv.Optional(CONF_RF_HIGH_TIME_SHORT_MINUTES): make_sensor_schema(),
+        cv.Optional(CONF_RF_HIGH_TIME_LONG_MINUTES): make_sensor_schema(),
+        cv.Optional(CONF_EXTRACTOR_HOOD_SWITCH_OFF_DELAY_MINUTES): make_sensor_schema(),
 
-        cv.Optional(CONF_FROST_PROTECTION_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_BYPASS_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_ENTHALPY_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_EWT_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_OPTIONS_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_FIREPLACE_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_KITCHEN_HOOD_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_POSTHEATING_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_POSTHEATING_PWM_MODE_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_PREHEATING_PRESENT): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_BYPASS_VALVE_OPEN): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_PREHEATING_STATE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_SUMMER_MODE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_SUPPLY_FAN_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
+        cv.Optional(CONF_FROST_PROTECTION_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_BYPASS_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_ENTHALPY_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_EWT_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_OPTIONS_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_FIREPLACE_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_KITCHEN_HOOD_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_POSTHEATING_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_POSTHEATING_PWM_MODE_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_PREHEATING_PRESENT): make_binary_sensor_schema(),
+        cv.Optional(CONF_BYPASS_VALVE_OPEN): make_binary_sensor_schema(),
+        cv.Optional(CONF_PREHEATING_STATE): make_binary_sensor_schema(),
+        cv.Optional(CONF_SUMMER_MODE): make_binary_sensor_schema(),
+        cv.Optional(CONF_SUPPLY_FAN_ACTIVE): make_binary_sensor_schema(),
 
-        cv.Optional(CONF_P10_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P11_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P12_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P13_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P14_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P15_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P16_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P17_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P18_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P19_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P90_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P91_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P92_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P93_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P94_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P95_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P96_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
-        cv.Optional(CONF_P97_ACTIVE): binary_sensor.binary_sensor_schema(
-            device_class=DEVICE_CLASS_EMPTY
-        ).extend(),
+        cv.Optional(CONF_P10_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P11_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P12_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P13_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P14_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P15_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P16_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P17_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P18_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P19_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P90_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P91_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P92_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P93_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P94_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P95_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P96_ACTIVE): make_binary_sensor_schema(),
+        cv.Optional(CONF_P97_ACTIVE): make_binary_sensor_schema(),
     }
 )
+
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
