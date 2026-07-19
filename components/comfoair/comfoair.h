@@ -21,7 +21,7 @@ static const float COMFOAIR_SUPPORTED_TEMP_STEP = 0.5f;
 class ComfoAirComponent : public climate::Climate, public PollingComponent, public uart::UARTDevice {
 public:
 
-  // Poll every 600ms
+  // Poll every 1000ms
   ComfoAirComponent() :
   Climate(),
   PollingComponent(1000),
@@ -454,15 +454,24 @@ protected:
     uint8_t *msg = &data_[COMMAND_LEN_HEAD];
 
     switch (data_[COMMAND_IDX_MSG_ID]) {
-      case RES_GET_BOOTLOADER_VERSION:
-        memcpy(bootloader_version_, msg, data_[COMMAND_IDX_DATA]);
+      case RES_GET_BOOTLOADER_VERSION: {
+        size_t len = std::min((size_t)data_[COMMAND_IDX_DATA], sizeof(bootloader_version_) - 1);
+        memcpy(bootloader_version_, msg, len);
+        bootloader_version_[len] = 0;
         break;
-      case RES_GET_FIRMWARE_VERSION:
-        memcpy(firmware_version_, msg, data_[COMMAND_IDX_DATA]);
+      }
+      case RES_GET_FIRMWARE_VERSION: {
+        size_t len = std::min((size_t)data_[COMMAND_IDX_DATA], sizeof(firmware_version_) - 1);
+        memcpy(firmware_version_, msg, len);
+        firmware_version_[len] = 0;
         break;
-      case RES_GET_CONNECTOR_BOARD_VERSION:
-        memcpy(connector_board_version_, msg, data_[COMMAND_IDX_DATA]);
+      }
+      case RES_GET_CONNECTOR_BOARD_VERSION: {
+        size_t len = std::min((size_t)data_[COMMAND_IDX_DATA], sizeof(connector_board_version_) - 1);
+        memcpy(connector_board_version_, msg, len);
+        connector_board_version_[len] = 0;
         break;
+      }
       case RES_GET_FAN_STATUS: {
           if (intake_fan_speed != nullptr) {
             intake_fan_speed->publish_state(msg[0]);
