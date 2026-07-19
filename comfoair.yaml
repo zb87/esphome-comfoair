@@ -14,17 +14,50 @@ packages:
   # debug: !include config/debug.yaml
   # debug_psram: !include config/debug-psram.yaml
 
-esphome:
-  on_boot:
-    - priority: 375.0
-      then:
-        # RGB status LED boot sequence
-        - script.execute: show_led_status
-
-wifi:
-  on_connect:
-    then:
-      - script.execute: on_wifi_connect
-  on_disconnect:
-    then:
-      - script.execute: show_led_status
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    id: boot_button
+    name: "Boot Button"
+    internal: true
+    on_click:
+      - min_length: 50ms
+        max_length: 1500ms
+        then:
+          - script.stop: show_led_status
+          - script.stop: on_wifi_connect
+          - lambda: |-
+              auto current_mode = id(comfoair_180).fan_mode.value_or(climate::CLIMATE_FAN_OFF);
+              auto call = id(comfoair_180).make_call();
+              if (current_mode == climate::CLIMATE_FAN_LOW) {
+                call.set_fan_mode(climate::CLIMATE_FAN_MEDIUM);
+                call.perform();
+                id(indicate_level).execute(2);
+              } else if (current_mode == climate::CLIMATE_FAN_MEDIUM) {
+                call.set_fan_mode(climate::CLIMATE_FAN_HIGH);
+                call.perform();
+                id(indicate_level).execute(3);
+              } else {
+                call.set_fan_mode(climate::CLIMATE_FAN_LOW);
+                call.perform();
+                id(indicate_level).execute(1);
+              }
+      - min_length: 5000ms
+        max_length: 15000ms
+        then:
+          - script.stop: show_led_status
+          - script.stop: on_wifi_connect
+          - script.stop: indicate_level
+          - logger.log: "Boot Button long pressed: Show RED LED for 5s, then perform factory reset"
+          - light.turn_on:
+              id: rgb_status_led
+              red: 100%
+              green: 0%
+              blue: 0%
+          - delay: 5s
+          - button.press: factory_reset_btn
