@@ -239,7 +239,7 @@ public:
     // Proxy commands from the display.
     while(uart_proxy_ != nullptr && uart_proxy_->available() != 0) {
       uart_proxy_->read_byte(&proxy_data_[proxy_data_index_]);
-      auto check = check_byte_(proxy_data_, proxy_data_index_);
+      auto check = check_byte_(proxy_data_, proxy_data_index_, proxy_encountered_seven_);
       if (!check.has_value()) {
         if (proxy_data_[COMMAND_ID_ACK] == COMMAND_ACK) {
           ESP_LOGV(TAG, "Proxying ACK from confosense.");
@@ -249,11 +249,13 @@ public:
         write_array(proxy_data_, proxy_data_index_+1);
         flush();
         proxy_data_index_ = 0;
+        proxy_encountered_seven_ = false;
         break;
       } else if (!*check) {
         // wrong data
         ESP_LOGD(TAG, "Byte %i of received data from confosense is invalid.", proxy_data_index_);
         proxy_data_index_ = 0;
+        proxy_encountered_seven_ = false;
       } else {
         proxy_data_index_++;
       }
@@ -261,7 +263,7 @@ public:
 
     while (available() != 0) {
       read_byte(&data_[data_index_]);
-      auto check = check_byte_(data_, data_index_);
+      auto check = check_byte_(data_, data_index_, encountered_seven_);
       if (!check.has_value()) {
 
         // finished
@@ -281,10 +283,12 @@ public:
         }
 
         data_index_ = 0;
+        encountered_seven_ = false;
       } else if (!*check) {
         // wrong data
         ESP_LOGD(TAG, "Byte %i of received data from comfoair is invalid.", data_index_);
         data_index_ = 0;
+        encountered_seven_ = false;
       } else {
         // next byte
         data_index_++;
@@ -409,10 +413,11 @@ protected:
     return sum + 0xad;
   }
 
-  optional<bool> check_byte_(uint8_t* data, uint8_t &index) {
+  optional<bool> check_byte_(uint8_t* data, uint8_t &index, bool &encountered_seven) {
     const uint8_t byte = data[index];
 
     if (index == 0) {
+      encountered_seven = false;
       return byte == COMMAND_PREFIX;
     }
 
@@ -441,15 +446,15 @@ protected:
 
     if (index < COMMAND_LEN_HEAD + data_length) {
       if (byte == 0x07) {
-        if (encountered_seven_) {
-          encountered_seven_ = false;
+        if (encountered_seven) {
+          encountered_seven = false;
           ESP_LOGI(TAG, "Encountered 7 at index %i", index);
           index--;
           return true;
         }
-        encountered_seven_ = true;
+        encountered_seven = true;
       } else {
-        encountered_seven_ = false;
+        encountered_seven = false;
       }
       return true;
     }
@@ -929,6 +934,7 @@ protected:
   uint8_t proxy_data_[30];
   uint8_t proxy_data_index_{0};
   bool encountered_seven_{false};
+  bool proxy_encountered_seven_{false};
   bool enable_fan_auto_{false};
   int16_t update_counter_{-4};
 
