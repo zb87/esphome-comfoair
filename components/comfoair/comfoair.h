@@ -253,6 +253,8 @@ public:
           ESP_LOGV(TAG, "Proxying ACK from confosense.");
         } else {
           ESP_LOGD(TAG, "Proxying command 0x%02X from confosense with %i bytes.", proxy_data_[COMMAND_IDX_MSG_ID], proxy_data_index_+1);
+          proxy_awaiting_response_ = true;
+          proxy_command_time_ = millis();
         }
         write_array(proxy_data_, proxy_data_index_+1);
         flush();
@@ -285,6 +287,7 @@ public:
             ESP_LOGV(TAG, "Proxying ACK from comfoair.");
           } else {
             ESP_LOGD(TAG, "Proxying command 0x%02X from comfoair with %i bytes.", data_[COMMAND_IDX_MSG_ID], data_index_+1);
+            proxy_awaiting_response_ = false;
           }
           uart_proxy_->write_array(data_, data_index_+1);
           uart_proxy_->flush();
@@ -406,6 +409,16 @@ protected:
     uint32_t now = millis();
     if (now - last_command_time_ < 50) {
       return;
+    }
+    // Don't send commands while waiting for a response to a proxied confosense command.
+    // This prevents bus collisions where two responses overlap in the serial buffer.
+    if (proxy_awaiting_response_) {
+      if (now - proxy_command_time_ < 250) {
+        return;
+      }
+      // Timeout: response was lost, proceed anyway
+      ESP_LOGW(TAG, "Proxy response timeout, proceeding with own command");
+      proxy_awaiting_response_ = false;
     }
     last_command_time_ = now;
 
@@ -981,6 +994,8 @@ protected:
   int32_t update_counter_{-4};
   std::deque<ComfoAirCommand> command_queue_;
   uint32_t last_command_time_{0};
+  bool proxy_awaiting_response_{false};
+  uint32_t proxy_command_time_{0};
 
   uint8_t bootloader_version_[13]{0};
   uint8_t firmware_version_[13]{0};
