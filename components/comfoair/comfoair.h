@@ -696,7 +696,10 @@ protected:
   void parse_faults_(const uint8_t *msg) {
     if (filter_status != nullptr) {
       uint8_t status = msg[8];
-      filter_status->publish_state(status == 0 ? "Ok" : (status == 1 ? "Full" : "Unknown"));
+      std::string new_state = status == 0 ? "Ok" : (status == 1 ? "Full" : "Unknown");
+      if (filter_status->state != new_state) {
+        filter_status->publish_state(new_state);
+      }
     }
   }
 
