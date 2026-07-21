@@ -574,6 +574,24 @@ protected:
     return {};
   }
 
+  // --- Deduplication helpers ---
+  // Only publish if the new value differs from the current state.
+  static void publish_if_changed_(sensor::Sensor *s, float value) {
+    if (s != nullptr && s->state != value) {
+      s->publish_state(value);
+    }
+  }
+  static void publish_if_changed_(binary_sensor::BinarySensor *s, bool value) {
+    if (s != nullptr && s->state != value) {
+      s->publish_state(value);
+    }
+  }
+  static void publish_if_changed_(text_sensor::TextSensor *s, const std::string &value) {
+    if (s != nullptr && s->state != value) {
+      s->publish_state(value);
+    }
+  }
+
   void parse_version_info_(uint8_t *target, size_t target_size, const uint8_t *msg) {
     size_t len = std::min((size_t) data_[COMMAND_IDX_DATA], target_size - 1);
     memcpy(target, msg, len);
@@ -581,311 +599,184 @@ protected:
   }
 
   void parse_fan_status_(const uint8_t *msg) {
-    if (intake_fan_speed != nullptr) {
-      intake_fan_speed->publish_state(msg[0]);
-    }
-    if (exhaust_fan_speed != nullptr) {
-      exhaust_fan_speed->publish_state(msg[1]);
-    }
-    if (intake_fan_speed_rpm != nullptr) {
-      intake_fan_speed_rpm->publish_state(raw_to_rpm(get_uint16_(2)));
-    }
-    if (exhaust_fan_speed_rpm != nullptr) {
-      exhaust_fan_speed_rpm->publish_state(raw_to_rpm(get_uint16_(4)));
-    }
+    publish_if_changed_(intake_fan_speed, (float) msg[0]);
+    publish_if_changed_(exhaust_fan_speed, (float) msg[1]);
+    publish_if_changed_(intake_fan_speed_rpm, raw_to_rpm(get_uint16_(2)));
+    publish_if_changed_(exhaust_fan_speed_rpm, raw_to_rpm(get_uint16_(4)));
   }
 
   void parse_valve_status_(const uint8_t *msg) {
-    if (bypass_valve != nullptr) {
-      bypass_valve->publish_state(msg[0]);
-    }
-    if (bypass_valve_open != nullptr) {
-      bypass_valve_open->publish_state(msg[0] != 0);
-    }
-    if (preheating_state != nullptr) {
-      preheating_state->publish_state(msg[1] != 0);
-    }
-    if (motor_current_bypass != nullptr) {
-      motor_current_bypass->publish_state(msg[2]);
-    }
-    if (motor_current_preheating != nullptr) {
-      motor_current_preheating->publish_state(msg[3]);
-    }
+    publish_if_changed_(bypass_valve, (float) msg[0]);
+    publish_if_changed_(bypass_valve_open, msg[0] != 0);
+    publish_if_changed_(preheating_state, msg[1] != 0);
+    publish_if_changed_(motor_current_bypass, (float) msg[2]);
+    publish_if_changed_(motor_current_preheating, (float) msg[3]);
   }
 
   void parse_bypass_control_status_(const uint8_t *msg) {
-    if (bypass_factor != nullptr) {
-      bypass_factor->publish_state(msg[2]);
-    }
-    if (bypass_step != nullptr) {
-      bypass_step->publish_state(msg[3]);
-    }
-    if (bypass_correction != nullptr) {
-      bypass_correction->publish_state(msg[4]);
-    }
-    if (summer_mode != nullptr) {
-      summer_mode->publish_state(msg[6] != 0);
-    }
+    publish_if_changed_(bypass_factor, (float) msg[2]);
+    publish_if_changed_(bypass_step, (float) msg[3]);
+    publish_if_changed_(bypass_correction, (float) msg[4]);
+    publish_if_changed_(summer_mode, msg[6] != 0);
   }
 
   void parse_temperature_status_(const uint8_t *msg) {
-    if (outside_air_temperature != nullptr) {
-      outside_air_temperature->publish_state(raw_to_celsius(msg[0]));
-    }
-    if (supply_air_temperature != nullptr) {
-      supply_air_temperature->publish_state(raw_to_celsius(msg[1]));
-    }
-    if (return_air_temperature != nullptr) {
-      return_air_temperature->publish_state(raw_to_celsius(msg[2]));
-    }
-    if (exhaust_air_temperature != nullptr) {
-      exhaust_air_temperature->publish_state(raw_to_celsius(msg[3]));
-    }
+    publish_if_changed_(outside_air_temperature, raw_to_celsius(msg[0]));
+    publish_if_changed_(supply_air_temperature, raw_to_celsius(msg[1]));
+    publish_if_changed_(return_air_temperature, raw_to_celsius(msg[2]));
+    publish_if_changed_(exhaust_air_temperature, raw_to_celsius(msg[3]));
   }
 
   void parse_sensor_data_(const uint8_t *msg) {
-    if (enthalpy_temperature != nullptr) {
-      enthalpy_temperature->publish_state(raw_to_celsius(msg[0]));
-    }
+    publish_if_changed_(enthalpy_temperature, raw_to_celsius(msg[0]));
   }
 
   void parse_ventilation_level_(const uint8_t *msg) {
     ESP_LOGD(TAG, "Level %02x", msg[8]);
 
-    if (return_air_level != nullptr) {
-      return_air_level->publish_state(msg[6]);
-    }
-    if (supply_air_level != nullptr) {
-      supply_air_level->publish_state(msg[7]);
-    }
+    publish_if_changed_(return_air_level, (float) msg[6]);
+    publish_if_changed_(supply_air_level, (float) msg[7]);
+    publish_if_changed_(ventilation_level, (float) (msg[8] - 1));
 
-    if (ventilation_level != nullptr) {
-      ventilation_level->publish_state(msg[8] - 1);
-    }
-
+    climate::ClimateFanMode new_fan_mode = fan_mode.value_or(climate::CLIMATE_FAN_OFF);
     switch (msg[8]) {
-      case FAN_LEVEL_AUTO:
-        fan_mode = climate::CLIMATE_FAN_AUTO;
-        mode = climate::CLIMATE_MODE_FAN_ONLY;
-        break;
-      case FAN_LEVEL_OFF:
-        fan_mode = climate::CLIMATE_FAN_OFF;
-        mode = climate::CLIMATE_MODE_FAN_ONLY;
-        break;
-      case FAN_LEVEL_LOW:
-        fan_mode = climate::CLIMATE_FAN_LOW;
-        mode = climate::CLIMATE_MODE_FAN_ONLY;
-        break;
-      case FAN_LEVEL_MEDIUM:
-        fan_mode = climate::CLIMATE_FAN_MEDIUM;
-        mode = climate::CLIMATE_MODE_FAN_ONLY;
-        break;
-      case FAN_LEVEL_HIGH:
-        fan_mode = climate::CLIMATE_FAN_HIGH;
-        mode = climate::CLIMATE_MODE_FAN_ONLY;
-        break;
+      case FAN_LEVEL_AUTO:  new_fan_mode = climate::CLIMATE_FAN_AUTO;   break;
+      case FAN_LEVEL_OFF:   new_fan_mode = climate::CLIMATE_FAN_OFF;    break;
+      case FAN_LEVEL_LOW:   new_fan_mode = climate::CLIMATE_FAN_LOW;    break;
+      case FAN_LEVEL_MEDIUM:new_fan_mode = climate::CLIMATE_FAN_MEDIUM; break;
+      case FAN_LEVEL_HIGH:  new_fan_mode = climate::CLIMATE_FAN_HIGH;   break;
     }
 
-    publish_state();
-
-    if (supply_fan_active != nullptr) {
-      supply_fan_active->publish_state(msg[9] == 1);
+    if (fan_mode != new_fan_mode || mode != climate::CLIMATE_MODE_FAN_ONLY) {
+      fan_mode = new_fan_mode;
+      mode = climate::CLIMATE_MODE_FAN_ONLY;
+      publish_state();
     }
+
+    publish_if_changed_(supply_fan_active, msg[9] == 1);
   }
 
   void parse_faults_(const uint8_t *msg) {
-    if (filter_status != nullptr) {
-      uint8_t status = msg[8];
-      std::string new_state = status == 0 ? "Ok" : (status == 1 ? "Full" : "Unknown");
-      if (filter_status->state != new_state) {
-        filter_status->publish_state(new_state);
-      }
-    }
+    uint8_t status = msg[8];
+    publish_if_changed_(filter_status, std::string(status == 0 ? "Ok" : (status == 1 ? "Full" : "Unknown")));
   }
 
   void parse_temperatures_(const uint8_t *msg) {
-    target_temperature = raw_to_celsius(msg[0]);
-    publish_state();
+    float new_target = raw_to_celsius(msg[0]);
+    bool climate_changed = (target_temperature != new_target);
+    target_temperature = new_target;
 
-    if (outside_air_temperature != nullptr && (msg[5] & TEMP_FLAG_OUTSIDE)) {
-      outside_air_temperature->publish_state(raw_to_celsius(msg[1]));
+    if ((msg[5] & TEMP_FLAG_OUTSIDE)) {
+      publish_if_changed_(outside_air_temperature, raw_to_celsius(msg[1]));
     }
-    if (supply_air_temperature != nullptr && (msg[5] & TEMP_FLAG_SUPPLY)) {
-      supply_air_temperature->publish_state(raw_to_celsius(msg[2]));
+    if ((msg[5] & TEMP_FLAG_SUPPLY)) {
+      publish_if_changed_(supply_air_temperature, raw_to_celsius(msg[2]));
     }
-    if (return_air_temperature != nullptr && (msg[5] & TEMP_FLAG_RETURN)) {
-      return_air_temperature->publish_state(raw_to_celsius(msg[3]));
-      current_temperature = raw_to_celsius(msg[3]);
+    if ((msg[5] & TEMP_FLAG_RETURN)) {
+      float new_current = raw_to_celsius(msg[3]);
+      publish_if_changed_(return_air_temperature, new_current);
+      if (current_temperature != new_current) {
+        current_temperature = new_current;
+        climate_changed = true;
+      }
     }
-    if (exhaust_air_temperature != nullptr && (msg[5] & TEMP_FLAG_EXHAUST)) {
-      exhaust_air_temperature->publish_state(raw_to_celsius(msg[4]));
+    if ((msg[5] & TEMP_FLAG_EXHAUST)) {
+      publish_if_changed_(exhaust_air_temperature, raw_to_celsius(msg[4]));
     }
-    if (ewt_temperature != nullptr && (msg[5] & TEMP_FLAG_EWT)) {
-      ewt_temperature->publish_state(raw_to_celsius(msg[6]));
+    if ((msg[5] & TEMP_FLAG_EWT)) {
+      publish_if_changed_(ewt_temperature, raw_to_celsius(msg[6]));
     }
-    if (reheating_temperature != nullptr && (msg[5] & TEMP_FLAG_REHEATING)) {
-      reheating_temperature->publish_state(raw_to_celsius(msg[7]));
+    if ((msg[5] & TEMP_FLAG_REHEATING)) {
+      publish_if_changed_(reheating_temperature, raw_to_celsius(msg[7]));
     }
-    if (kitchen_hood_temperature != nullptr && (msg[5] & TEMP_FLAG_KITCHEN_HOOD)) {
-      kitchen_hood_temperature->publish_state(raw_to_celsius(msg[8]));
+    if ((msg[5] & TEMP_FLAG_KITCHEN_HOOD)) {
+      publish_if_changed_(kitchen_hood_temperature, raw_to_celsius(msg[8]));
+    }
+
+    if (climate_changed) {
+      publish_state();
     }
   }
 
   void parse_status_(const uint8_t *msg) {
-    if (preheating_present != nullptr) {
-      preheating_present->publish_state(msg[0]);
-    }
+    publish_if_changed_(preheating_present, (bool) msg[0]);
+    publish_if_changed_(bypass_present, (bool) msg[1]);
+    publish_if_changed_(type, std::string(msg[2] == UNIT_TYPE_LEFT ? "Left" : (msg[2] == UNIT_TYPE_RIGHT ? "Right" : "Unknown")));
+    publish_if_changed_(size, std::string(msg[3] == UNIT_SIZE_LARGE ? "Large" : (msg[3] == UNIT_SIZE_SMALL ? "Small" : "Unknown")));
+    publish_if_changed_(options_present, (bool) msg[4]);
+    publish_if_changed_(fireplace_present, (bool) (msg[4] & STATUS_OPT_FIREPLACE));
+    publish_if_changed_(kitchen_hood_present, (bool) (msg[4] & STATUS_OPT_KITCHEN_HOOD));
+    publish_if_changed_(postheating_present, (bool) (msg[4] & STATUS_OPT_POSTHEATING));
+    publish_if_changed_(postheating_pwm_mode_present, (bool) (msg[4] & STATUS_OPT_POSTHEATING_PWM));
 
-    if (bypass_present != nullptr) {
-      bypass_present->publish_state(msg[1]);
-    }
+    publish_if_changed_(p10_active, (bool) (msg[6] & (1 << 0)));
+    publish_if_changed_(p11_active, (bool) (msg[6] & (1 << 1)));
+    publish_if_changed_(p12_active, (bool) (msg[6] & (1 << 2)));
+    publish_if_changed_(p13_active, (bool) (msg[6] & (1 << 3)));
+    publish_if_changed_(p14_active, (bool) (msg[6] & (1 << 4)));
+    publish_if_changed_(p15_active, (bool) (msg[6] & (1 << 5)));
+    publish_if_changed_(p16_active, (bool) (msg[6] & (1 << 6)));
+    publish_if_changed_(p17_active, (bool) (msg[6] & (1 << 7)));
 
-    if (type != nullptr) {
-      type->publish_state(msg[2] == UNIT_TYPE_LEFT ? "Left" : (msg[2] == UNIT_TYPE_RIGHT ? "Right" : "Unknown"));
-    }
+    publish_if_changed_(p18_active, (bool) (msg[7] & (1 << 0)));
+    publish_if_changed_(p19_active, (bool) (msg[7] & (1 << 1)));
 
-    if (size != nullptr) {
-      size->publish_state(msg[3] == UNIT_SIZE_LARGE ? "Large" : (msg[3] == UNIT_SIZE_SMALL ? "Small" : "Unknown"));
-    }
+    publish_if_changed_(p90_active, (bool) (msg[8] & (1 << 0)));
+    publish_if_changed_(p91_active, (bool) (msg[8] & (1 << 1)));
+    publish_if_changed_(p92_active, (bool) (msg[8] & (1 << 2)));
+    publish_if_changed_(p93_active, (bool) (msg[8] & (1 << 3)));
+    publish_if_changed_(p94_active, (bool) (msg[8] & (1 << 4)));
+    publish_if_changed_(p95_active, (bool) (msg[8] & (1 << 5)));
+    publish_if_changed_(p96_active, (bool) (msg[8] & (1 << 6)));
+    publish_if_changed_(p97_active, (bool) (msg[8] & (1 << 7)));
 
-    if (options_present != nullptr) {
-      options_present->publish_state(msg[4]);
-    }
-
-    if (fireplace_present != nullptr) {
-      fireplace_present->publish_state(msg[4] & STATUS_OPT_FIREPLACE);
-    }
-
-    if (kitchen_hood_present != nullptr) {
-      kitchen_hood_present->publish_state(msg[4] & STATUS_OPT_KITCHEN_HOOD);
-    }
-
-    if (postheating_present != nullptr) {
-      postheating_present->publish_state(msg[4] & STATUS_OPT_POSTHEATING);
-    }
-
-    if (postheating_pwm_mode_present != nullptr) {
-      postheating_pwm_mode_present->publish_state(msg[4] & STATUS_OPT_POSTHEATING_PWM);
-    }
-
-    if (p10_active != nullptr) { p10_active->publish_state(msg[6] & (1 << 0)); }
-    if (p11_active != nullptr) { p11_active->publish_state(msg[6] & (1 << 1)); }
-    if (p12_active != nullptr) { p12_active->publish_state(msg[6] & (1 << 2)); }
-    if (p13_active != nullptr) { p13_active->publish_state(msg[6] & (1 << 3)); }
-    if (p14_active != nullptr) { p14_active->publish_state(msg[6] & (1 << 4)); }
-    if (p15_active != nullptr) { p15_active->publish_state(msg[6] & (1 << 5)); }
-    if (p16_active != nullptr) { p16_active->publish_state(msg[6] & (1 << 6)); }
-    if (p17_active != nullptr) { p17_active->publish_state(msg[6] & (1 << 7)); }
-
-    if (p18_active != nullptr) { p18_active->publish_state(msg[7] & (1 << 0)); }
-    if (p19_active != nullptr) { p19_active->publish_state(msg[7] & (1 << 1)); }
-
-    if (p90_active != nullptr) { p90_active->publish_state(msg[8] & (1 << 0)); }
-    if (p91_active != nullptr) { p91_active->publish_state(msg[8] & (1 << 1)); }
-    if (p92_active != nullptr) { p92_active->publish_state(msg[8] & (1 << 2)); }
-    if (p93_active != nullptr) { p93_active->publish_state(msg[8] & (1 << 3)); }
-    if (p94_active != nullptr) { p94_active->publish_state(msg[8] & (1 << 4)); }
-    if (p95_active != nullptr) { p95_active->publish_state(msg[8] & (1 << 5)); }
-    if (p96_active != nullptr) { p96_active->publish_state(msg[8] & (1 << 6)); }
-    if (p97_active != nullptr) { p97_active->publish_state(msg[8] & (1 << 7)); }
-
-    if (enthalpy_present != nullptr) {
-      enthalpy_present->publish_state(msg[9]);
-    }
-
-    if (ewt_present != nullptr) {
-      ewt_present->publish_state(msg[10]);
-    }
+    publish_if_changed_(enthalpy_present, (bool) msg[9]);
+    publish_if_changed_(ewt_present, (bool) msg[10]);
   }
 
   void parse_operating_hours_(const uint8_t *msg) {
-    if (level0_hours != nullptr) {
-      level0_hours->publish_state((msg[0] << 16) | (msg[1] << 8) | msg[2]);
-    }
-    if (level1_hours != nullptr) {
-      level1_hours->publish_state((msg[3] << 16) | (msg[4] << 8) | msg[5]);
-    }
-    if (level2_hours != nullptr) {
-      level2_hours->publish_state((msg[6] << 16) | (msg[7] << 8) | msg[8]);
-    }
-    if (level3_hours != nullptr) {
-      level3_hours->publish_state((msg[17] << 16) | (msg[18] << 8) | msg[19]);
-    }
-    if (frost_protection_hours != nullptr) {
-      frost_protection_hours->publish_state((msg[9] << 8) | msg[10]);
-    }
-    if (bypass_open_hours != nullptr) {
-      bypass_open_hours->publish_state((msg[13] << 8) | msg[14]);
-    }
-    if (preheating_hours != nullptr) {
-      preheating_hours->publish_state((msg[11] << 8) | msg[12]);
-    }
-    if (filter_hours != nullptr) {
-      filter_hours->publish_state((msg[15] << 8) | msg[16]);
-    }
+    publish_if_changed_(level0_hours, (float) ((msg[0] << 16) | (msg[1] << 8) | msg[2]));
+    publish_if_changed_(level1_hours, (float) ((msg[3] << 16) | (msg[4] << 8) | msg[5]));
+    publish_if_changed_(level2_hours, (float) ((msg[6] << 16) | (msg[7] << 8) | msg[8]));
+    publish_if_changed_(level3_hours, (float) ((msg[17] << 16) | (msg[18] << 8) | msg[19]));
+    publish_if_changed_(frost_protection_hours, (float) ((msg[9] << 8) | msg[10]));
+    publish_if_changed_(bypass_open_hours, (float) ((msg[13] << 8) | msg[14]));
+    publish_if_changed_(preheating_hours, (float) ((msg[11] << 8) | msg[12]));
+    publish_if_changed_(filter_hours, (float) ((msg[15] << 8) | msg[16]));
   }
 
   void parse_preheating_status_(const uint8_t *msg) {
-    if (preheating_valve != nullptr) {
-      std::string name_preheating_valve;
-      switch (msg[0]) {
-        case 0: name_preheating_valve = "Closed"; break;
-        case 1: name_preheating_valve = "Open"; break;
-        default: name_preheating_valve = "Unknown"; break;
-      }
-      preheating_valve->publish_state(name_preheating_valve);
+    std::string valve_state;
+    switch (msg[0]) {
+      case 0: valve_state = "Closed"; break;
+      case 1: valve_state = "Open"; break;
+      default: valve_state = "Unknown"; break;
     }
+    publish_if_changed_(preheating_valve, valve_state);
+    publish_if_changed_(frost_protection_active, msg[1] != 0);
+    publish_if_changed_(preheating_state, msg[2] != 0);
+    publish_if_changed_(frost_protection_minutes, (float) ((msg[3] << 8) | msg[4]));
 
-    if (frost_protection_active != nullptr) {
-      frost_protection_active->publish_state(msg[1] != 0);
+    std::string fp_level;
+    switch (msg[5]) {
+      case 0: fp_level = "GuaranteedProtection"; break;
+      case 1: fp_level = "HighProtection"; break;
+      case 2: fp_level = "NominalProtection"; break;
+      case 3: fp_level = "Economy"; break;
+      default: fp_level = "Unknown"; break;
     }
-
-    if (preheating_state != nullptr) {
-      preheating_state->publish_state(msg[2] != 0);
-    }
-
-    if (frost_protection_minutes != nullptr) {
-      frost_protection_minutes->publish_state((msg[3] << 8) | msg[4]);
-    }
-
-    if (frost_protection_level != nullptr) {
-      std::string name_frost_protection_level;
-      switch (msg[5]) {
-        case 0: name_frost_protection_level = "GuaranteedProtection"; break;
-        case 1: name_frost_protection_level = "HighProtection"; break;
-        case 2: name_frost_protection_level = "NominalProtection"; break;
-        case 3: name_frost_protection_level = "Economy"; break;
-        default: name_frost_protection_level = "Unknown"; break;
-      }
-      frost_protection_level->publish_state(name_frost_protection_level);
-    }
+    publish_if_changed_(frost_protection_level, fp_level);
   }
 
   void parse_time_delay_(const uint8_t *msg) {
-    if (bathroom_switch_on_delay_minutes != nullptr) {
-      bathroom_switch_on_delay_minutes->publish_state(msg[0]);
-    }
-    if (bathroom_switch_off_delay_minutes != nullptr) {
-      bathroom_switch_off_delay_minutes->publish_state(msg[1]);
-    }
-    if (l1_switch_off_delay_minutes != nullptr) {
-      l1_switch_off_delay_minutes->publish_state(msg[2]);
-    }
-    if (boost_ventilation_minutes != nullptr) {
-      boost_ventilation_minutes->publish_state(msg[3]);
-    }
-    if (filter_warning_weeks != nullptr) {
-      filter_warning_weeks->publish_state(msg[4]);
-    }
-    if (rf_high_time_short_minutes != nullptr) {
-      rf_high_time_short_minutes->publish_state(msg[5]);
-    }
-    if (rf_high_time_long_minutes != nullptr) {
-      rf_high_time_long_minutes->publish_state(msg[6]);
-    }
-    if (extractor_hood_switch_off_delay_minutes != nullptr) {
-      extractor_hood_switch_off_delay_minutes->publish_state(msg[7]);
-    }
+    publish_if_changed_(bathroom_switch_on_delay_minutes, (float) msg[0]);
+    publish_if_changed_(bathroom_switch_off_delay_minutes, (float) msg[1]);
+    publish_if_changed_(l1_switch_off_delay_minutes, (float) msg[2]);
+    publish_if_changed_(boost_ventilation_minutes, (float) msg[3]);
+    publish_if_changed_(filter_warning_weeks, (float) msg[4]);
+    publish_if_changed_(rf_high_time_short_minutes, (float) msg[5]);
+    publish_if_changed_(rf_high_time_long_minutes, (float) msg[6]);
+    publish_if_changed_(extractor_hood_switch_off_delay_minutes, (float) msg[7]);
   }
 
   void parse_data_() {
