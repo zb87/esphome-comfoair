@@ -1,5 +1,7 @@
 #pragma once
 
+#include <deque>
+#include <algorithm>
 #include "esphome.h"
 #include "esphome/core/component.h"
 #include "esphome/components/uart/uart.h"
@@ -11,6 +13,12 @@
 
 namespace esphome {
 namespace comfoair {
+
+struct ComfoAirCommand {
+  uint8_t command{0};
+  uint8_t data[16]{0};
+  uint8_t length{0};
+};
 
 static const char *TAG = "comfoair";
 
@@ -294,6 +302,8 @@ public:
         data_index_++;
       }
     }
+
+    process_command_queue_();
   }
 
   float get_setup_priority() const override { return setup_priority::DATA; }
@@ -376,21 +386,53 @@ protected:
   }
 
   void write_command_(const uint8_t command, const uint8_t *command_data, uint8_t command_data_length) {
+    ComfoAirCommand cmd;
+    cmd.command = command;
+    cmd.length = (command_data_length > sizeof(cmd.data)) ? sizeof(cmd.data) : command_data_length;
+    if (command_data != nullptr && cmd.length > 0) {
+      memcpy(cmd.data, command_data, cmd.length);
+    }
+    command_queue_.push_back(cmd);
+    process_command_queue_();
+  }
+
+  void process_command_queue_() {
+    if (command_queue_.empty()) {
+      return;
+    }
+    if (data_index_ > 0) {
+      return;
+    }
+    uint32_t now = millis();
+    if (now - last_command_time_ < 50) {
+      return;
+    }
+    last_command_time_ = now;
+
+    ComfoAirCommand cmd = command_queue_.front();
+    command_queue_.pop_front();
+
     write_byte(COMMAND_PREFIX);
     write_byte(COMMAND_HEAD);
     write_byte(0x00);
-    write_byte(command);
-    write_byte(command_data_length);
-    if (command_data_length > 0) {
-      write_array(command_data, command_data_length);
-      write_byte((command + command_data_length + comfoair_checksum_(command_data, command_data_length)) & 0xff);
+    write_byte(cmd.command);
+    write_byte(cmd.length);
+    if (cmd.length > 0) {
+      for (uint8_t i = 0; i < cmd.length; i++) {
+        uint8_t b = cmd.data[i];
+        write_byte(b);
+        if (b == 0x07) {
+          write_byte(0x07);
+        }
+      }
+      write_byte((cmd.command + cmd.length + comfoair_checksum_(cmd.data, cmd.length)) & 0xff);
     } else {
-      write_byte(comfoair_checksum_(&command, 1));
+      write_byte(comfoair_checksum_(&cmd.command, 1));
     }
     write_byte(COMMAND_PREFIX);
     write_byte(COMMAND_TAIL);
     flush();
-}
+  }
 
   uint8_t comfoair_checksum_(const uint8_t *command_data, uint8_t length) const {
     uint8_t sum = 0;
@@ -937,6 +979,8 @@ protected:
   bool proxy_encountered_seven_{false};
   bool enable_fan_auto_{false};
   int16_t update_counter_{-4};
+  std::deque<ComfoAirCommand> command_queue_;
+  uint32_t last_command_time_{0};
 
   uint8_t bootloader_version_[13]{0};
   uint8_t firmware_version_[13]{0};
