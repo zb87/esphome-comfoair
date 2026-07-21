@@ -245,19 +245,14 @@ public:
 
   void loop() override {
     // Proxy commands from the display.
-    while(uart_proxy_ != nullptr && uart_proxy_->available() != 0) {
+    // Read and assemble commands, but only if we don't already have one pending.
+    while(uart_proxy_ != nullptr && uart_proxy_->available() != 0 && !proxy_command_ready_) {
       uart_proxy_->read_byte(&proxy_data_[proxy_data_index_]);
       auto check = check_byte_(proxy_data_, proxy_data_index_, proxy_encountered_seven_);
       if (!check.has_value()) {
-        if (proxy_data_[COMMAND_ID_ACK] == COMMAND_ACK) {
-          ESP_LOGV(TAG, "Proxying ACK from confosense.");
-        } else {
-          ESP_LOGD(TAG, "Proxying command 0x%02X from confosense with %i bytes.", proxy_data_[COMMAND_IDX_MSG_ID], proxy_data_index_+1);
-          proxy_awaiting_response_ = true;
-          proxy_command_time_ = millis();
-        }
-        write_array(proxy_data_, proxy_data_index_+1);
-        flush();
+        // Complete message assembled. Mark ready for sending.
+        proxy_command_ready_ = true;
+        proxy_command_len_ = proxy_data_index_ + 1;
         proxy_data_index_ = 0;
         proxy_encountered_seven_ = false;
         break;
@@ -271,10 +266,36 @@ public:
       }
     }
 
+    // Send pending proxy command if available and bus is free.
+    if (proxy_command_ready_) {
+      bool is_ack = (proxy_data_[COMMAND_ID_ACK] == COMMAND_ACK);
+      // ACKs can always be sent immediately (they don't trigger a response).
+      // Commands can only be sent when the bus is not busy.
+      bool timed_out = (millis() - bus_busy_time_ >= 250);
+      if (is_ack || !bus_busy_ || timed_out) {
+        if (bus_busy_ && timed_out && !is_ack) {
+          ESP_LOGW(TAG, "Bus response timeout, proxying confosense command anyway");
+        }
+        if (is_ack) {
+          ESP_LOGV(TAG, "Proxying ACK from confosense.");
+        } else {
+          ESP_LOGD(TAG, "Proxying command 0x%02X from confosense with %i bytes.", proxy_data_[COMMAND_IDX_MSG_ID], proxy_command_len_);
+          bus_busy_ = true;
+          bus_busy_time_ = millis();
+        }
+        write_array(proxy_data_, proxy_command_len_);
+        flush();
+        proxy_command_ready_ = false;
+      }
+    }
+
     while (available() != 0) {
       read_byte(&data_[data_index_]);
       auto check = check_byte_(data_, data_index_, encountered_seven_);
       if (!check.has_value()) {
+
+        // Response received, bus is free for the next command.
+        bus_busy_ = false;
 
         // finished
         if (data_[COMMAND_ID_ACK] != COMMAND_ACK) {
@@ -287,7 +308,6 @@ public:
             ESP_LOGV(TAG, "Proxying ACK from comfoair.");
           } else {
             ESP_LOGD(TAG, "Proxying command 0x%02X from comfoair with %i bytes.", data_[COMMAND_IDX_MSG_ID], data_index_+1);
-            proxy_awaiting_response_ = false;
           }
           uart_proxy_->write_array(data_, data_index_+1);
           uart_proxy_->flush();
@@ -410,15 +430,16 @@ protected:
     if (now - last_command_time_ < 50) {
       return;
     }
-    // Don't send commands while waiting for a response to a proxied confosense command.
+    // Don't send commands while the bus is busy (waiting for a response to
+    // either a proxied confosense command or our own previous command).
     // This prevents bus collisions where two responses overlap in the serial buffer.
-    if (proxy_awaiting_response_) {
-      if (now - proxy_command_time_ < 250) {
+    if (bus_busy_) {
+      if (now - bus_busy_time_ < 250) {
         return;
       }
       // Timeout: response was lost, proceed anyway
-      ESP_LOGW(TAG, "Proxy response timeout, proceeding with own command");
-      proxy_awaiting_response_ = false;
+      ESP_LOGW(TAG, "Bus response timeout, proceeding with own command");
+      bus_busy_ = false;
     }
     last_command_time_ = now;
 
@@ -445,6 +466,9 @@ protected:
     write_byte(COMMAND_PREFIX);
     write_byte(COMMAND_TAIL);
     flush();
+
+    bus_busy_ = true;
+    bus_busy_time_ = millis();
   }
 
   uint8_t comfoair_checksum_(const uint8_t *command_data, uint8_t length) const {
@@ -994,8 +1018,10 @@ protected:
   int32_t update_counter_{-4};
   std::deque<ComfoAirCommand> command_queue_;
   uint32_t last_command_time_{0};
-  bool proxy_awaiting_response_{false};
-  uint32_t proxy_command_time_{0};
+  bool bus_busy_{false};
+  uint32_t bus_busy_time_{0};
+  bool proxy_command_ready_{false};
+  uint8_t proxy_command_len_{0};
 
   uint8_t bootloader_version_[13]{0};
   uint8_t firmware_version_[13]{0};
