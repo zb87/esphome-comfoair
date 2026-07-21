@@ -13,7 +13,7 @@ from esphome.const import (CONF_ID, CONF_UART_ID, DEVICE_CLASS_CURRENT,
 comfoair_ns = cg.esphome_ns.namespace("comfoair")
 ComfoAirComponent = comfoair_ns.class_("ComfoAirComponent", cg.Component)
 
-DEPENDENCIES = ["uart"]
+DEPENDENCIES = ["uart", "wifi"]
 AUTO_LOAD = ["sensor", "climate", "binary_sensor", "text_sensor"]
 REQUIRED_KEY_NAME = "name"
 CONF_HUB_ID = "comfoair"

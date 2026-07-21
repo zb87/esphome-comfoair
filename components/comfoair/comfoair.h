@@ -5,6 +5,7 @@
 #include "esphome.h"
 #include "esphome/core/component.h"
 #include "esphome/components/uart/uart.h"
+#include "esphome/components/wifi/wifi_component.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/climate/climate_mode.h"
 #include "esphome/components/climate/climate_traits.h"
@@ -158,6 +159,10 @@ public:
   }
 
   void update() override {
+    // Don't communicate with ComfoAir until WiFi STA is connected.
+    // AP mode (fallback hotspot) does not count as connected.
+    if (!wifi::global_wifi_component->is_connected()) return;
+
     if (update_counter_ < 0) {
       // One-time check on start up
       switch(update_counter_) {
@@ -244,6 +249,9 @@ public:
   }
 
   void loop() override {
+    // Don't proxy until WiFi STA is connected.
+    if (!wifi::global_wifi_component->is_connected()) return;
+
     // Proxy commands from the display.
     // Read and assemble commands, but only if we don't already have one pending.
     while(uart_proxy_ != nullptr && uart_proxy_->available() != 0 && !proxy_command_ready_) {
