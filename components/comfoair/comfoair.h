@@ -20,7 +20,7 @@ struct ComfoAirCommand {
   uint8_t length{0};
 };
 
-static const char *TAG = "comfoair";
+static constexpr const char *const TAG = "comfoair";
 
 static const uint8_t COMFOAIR_MIN_SUPPORTED_TEMP = 12;
 static const uint8_t COMFOAIR_MAX_SUPPORTED_TEMP = 29;
@@ -971,14 +971,14 @@ protected:
     return (uint16_t(data_[COMMAND_LEN_HEAD + start_index + 1] | data_[COMMAND_LEN_HEAD + start_index] << 8));
   }
 
-  uint8_t data_[30];
+  uint8_t data_[64];
   uint8_t data_index_{0};
-  uint8_t proxy_data_[30];
+  uint8_t proxy_data_[64];
   uint8_t proxy_data_index_{0};
   bool encountered_seven_{false};
   bool proxy_encountered_seven_{false};
   bool enable_fan_auto_{false};
-  int16_t update_counter_{-4};
+  int32_t update_counter_{-4};
   std::deque<ComfoAirCommand> command_queue_;
   uint32_t last_command_time_{0};
 
