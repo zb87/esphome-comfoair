@@ -1,9 +1,9 @@
 # Fan Boost package for ComfoAir
 globals:
-  - id: boost_active
-    type: bool
+  - id: boost_state
+    type: std::string
     restore_value: yes
-    initial_value: 'false'
+    initial_value: '"off"'
   - id: boost_original_fan_mode
     type: int
     restore_value: yes
@@ -14,10 +14,10 @@ esphome:
     - priority: 200.0
       then:
         - lambda: |-
-            if (id(boost_active)) {
+            if (id(boost_state) != "off") {
               ESP_LOGW("main", "ESP32 rebooted while boost was active! Reverting fan mode to original: %d", id(boost_original_fan_mode));
               auto target_mode = (climate::ClimateFanMode) id(boost_original_fan_mode);
-              id(boost_active) = false;
+              id(boost_state) = "off";
               id(boost_status).publish_state(false);
 
               auto call = id(comfoair_180).make_call();
@@ -32,7 +32,7 @@ binary_sensor:
     icon: "mdi:fan-clock"
     device_class: running
     lambda: |-
-      return id(boost_active);
+      return id(boost_state) != "off";
 
 sensor:
   - platform: template
@@ -43,10 +43,11 @@ sensor:
     on_value:
       then:
         - lambda: |-
-            if (id(boost_active) && ((int) round(x) != 3)) {
+            if (std::isnan(x)) return;
+            if (id(boost_state) == "running" && ((int) round(x) != 3)) {
               ESP_LOGI("main", "Fan level changed to %d during boost. Cancelling boost.", (int) round(x));
               id(start_boost).stop();
-              id(boost_active) = false;
+              id(boost_state) = "off";
               id(boost_status).publish_state(false);
             }
 
@@ -81,13 +82,14 @@ script:
       - script.stop: on_wifi_connect
       - lambda: |-
           int duration = (int) id(boost_duration_min).state;
-          if (!id(boost_active)) {
+          if (id(boost_state) == "off") {
             auto current_mode = id(comfoair_180).fan_mode.value_or(climate::CLIMATE_FAN_LOW);
             id(boost_original_fan_mode) = (int) current_mode;
-            id(boost_active) = true;
+            id(boost_state) = "starting";
             id(boost_status).publish_state(true);
             ESP_LOGI("main", "Fan Boost started (%d min). Saved original fan mode: %d", duration, (int) current_mode);
           } else {
+            id(boost_state) = "starting";
             id(boost_status).publish_state(true);
             ESP_LOGI("main", "Fan Boost already active. Extending timer (%d min, original mode: %d)", duration, id(boost_original_fan_mode));
           }
@@ -97,11 +99,31 @@ script:
       - script.execute:
           id: indicate_level
           pulses: 3
+      - wait_until:
+          condition:
+            lambda: |-
+              return !std::isnan(id(ventilation_level).state) && ((int) round(id(ventilation_level).state) == 3);
+          timeout: 30s
+      - lambda: |-
+          if (!std::isnan(id(ventilation_level).state) && (int) round(id(ventilation_level).state) == 3) {
+            ESP_LOGI("main", "Fan level reached 3. Boost state changed to running.");
+            id(boost_state) = "running";
+          } else {
+            ESP_LOGW("main", "Timeout waiting for ventilation level 3. Cancelling boost.");
+            auto target_mode = (climate::ClimateFanMode) id(boost_original_fan_mode);
+            id(boost_state) = "off";
+            id(boost_status).publish_state(false);
+
+            auto call = id(comfoair_180).make_call();
+            call.set_fan_mode(target_mode);
+            call.perform();
+            return;
+          }
       - delay: !lambda "return (uint32_t) (id(boost_duration_min).state * 60000.0f);"
       - lambda: |-
           ESP_LOGI("main", "Fan Boost finished. Reverting fan mode to original: %d", id(boost_original_fan_mode));
           auto target_mode = (climate::ClimateFanMode) id(boost_original_fan_mode);
-          id(boost_active) = false;
+          id(boost_state) = "off";
           id(boost_status).publish_state(false);
 
           auto call = id(comfoair_180).make_call();
@@ -112,3 +134,6 @@ script:
           if (target_mode == climate::CLIMATE_FAN_MEDIUM) pulses = 2;
           else if (target_mode == climate::CLIMATE_FAN_HIGH) pulses = 3;
           id(indicate_level).execute(pulses);
+
+
+
