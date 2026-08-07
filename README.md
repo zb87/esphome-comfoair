@@ -8,7 +8,9 @@ ESPHome configuration for Zehnder ComfoAir 180 / 200 series ventilation units po
 - **Pass-through Proxy**: Supports dual UART to allow an original external remote controller to operate concurrently with ESPHome.
 - **Wi-Fi & Home Assistant**: Built-in Home Assistant Native API discovery, Improv Serial, and Web Server UI on port 80.
 - **Visual Status LED**: Single WS2812 RGB LED providing clear visual feedback for system state, network status, filter warnings, and fan adjustments.
-- **Multifunction Boot Button**: Manual fan speed cycling and hardware factory reset.
+- **Configurable High-Speed Fan Boost**: Temporarily boosts ventilation fan to High speed (level 3) for a configurable duration (10–60 minutes, default 30m). Automatically reverts to pre-boost fan speed after timeout or ESP32 reboot.
+- **Multifunction Boot Button**: Trigger high-speed fan boost or execute hardware factory reset.
+- **Optional PTX YK1 BLE Button**: Support for PTX_YK1 wireless Bluetooth button for triggering fan boost remotely.
 
 ---
 
@@ -84,7 +86,7 @@ The RGB status LED provides real-time visual feedback:
 | **Solid On** (10s) | 🟢 Green | **Wi-Fi Connected** (Displays for 10s upon successful connection) |
 | **Off** | ⚪ None | **Normal Status** (Wi-Fi connected & filter status healthy) |
 | **Solid On** | 🟣 Purple | **Filter Replacement Required** (Filter status marked as Full) |
-| **Fast Pulse** | 🔵 Blue | **Fan Level Change** (Pulses 1x for Low, 2x for Medium, 3x for High) |
+| **Fast Pulse** | 🔵 Blue | **Fan Level Change / Boost** (Pulses 1x for Low, 2x for Medium, 3x for High) |
 | **Solid On** (5s) | 🔴 Red | **Factory Reset Warning** (Triggers before factory reset executes) |
 
 ---
@@ -94,11 +96,37 @@ The RGB status LED provides real-time visual feedback:
 The physical Boot button on GPIO0 provides manual control:
 
 - **Short Press** (50ms – 1.5s):
-  - Cycles ventilation fan mode: **Low ➔ Medium ➔ High ➔ Low**.
-  - Triggers a **BLUE fast pulse** LED animation matching the selected level (1 pulse = Low, 2 pulses = Medium, 3 pulses = High).
+  - Starts or extends the **High-Speed Fan Boost** for the configured duration (default 30m, range 10–60m).
+  - Triggers 3 **BLUE fast pulses** on the status LED.
+  - Reverts to the original pre-boost fan speed automatically when the timer finishes (or immediately upon ESP32 reboot if power was lost during boost).
 - **Long Press** (5s – 15s):
   - Initiates a **Factory Reset**.
-  - Displays a solid **RED** LED for 3 seconds as a warning before erasing stored Wi-Fi credentials and resetting device configuration.
+  - Displays a solid **RED** LED for 5 seconds as a warning before erasing stored Wi-Fi credentials and resetting device configuration.
+
+---
+
+## 4. Fan High Speed Boost & Optional Packages
+
+### Fan Boost Package (`config/fan-boost.yaml`)
+Included by default in `comfoair.yaml`. Exposes the following entities in Home Assistant:
+- **`number.boost_duration`**: Configurable duration slider/box (10–60 minutes, saved to flash across reboots).
+- **`button.start_fan_boost`**: Manual boost trigger button entity.
+- **`binary_sensor.fan_boost_status`**: Status indicator (`ON` / `OFF`) showing whether fan boost is running.
+
+### Optional: PTX YK1 BLE Remote Button (`config/ptx-yk1-button.yaml`)
+*Note: This package is **optional and not included by default**.*
+
+If you have a PTX_YK1 BLE wireless button:
+1. Open `comfoair.yaml` and uncomment the package line:
+   ```yaml
+   packages:
+     ...
+     ptx_yk1_button: !include config/ptx-yk1-button.yaml
+   ```
+2. Open `secrets.yaml` and set your button's Bluetooth MAC address:
+   ```yaml
+   ptx_yk1_mac: "A4:C1:38:F6:E2:A4"
+   ```
 
 ---
 
@@ -107,4 +135,3 @@ The physical Boot button on GPIO0 provides manual control:
 The code is based on the following GitHub projects:
 - https://github.com/wichers/esphome-comfoair
 - https://github.com/julianpas/esphome-comfoair
-

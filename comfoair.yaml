@@ -9,7 +9,9 @@ packages:
   bluetooth_proxy: !include config/bluetooth-proxy.yaml
   comfoair: !include config/comfoair-base.yaml
   led_status: !include config/led-status.yaml
+  fan_boost: !include config/fan-boost.yaml
   # Optional packages
+  # ptx_yk1_button: !include config/ptx-yk1-button.yaml
   # with_private_wifi: !include config/base-with-preset-wifi.yaml
   # debug: !include config/debug.yaml
   # debug_psram: !include config/debug-psram.yaml
@@ -29,24 +31,10 @@ binary_sensor:
       - min_length: 50ms
         max_length: 1500ms
         then:
-          - script.stop: show_led_status
-          - script.stop: on_wifi_connect
-          - lambda: |-
-              auto current_mode = id(comfoair_180).fan_mode.value_or(climate::CLIMATE_FAN_OFF);
-              auto call = id(comfoair_180).make_call();
-              if (current_mode == climate::CLIMATE_FAN_LOW) {
-                call.set_fan_mode(climate::CLIMATE_FAN_MEDIUM);
-                call.perform();
-                id(indicate_level).execute(2);
-              } else if (current_mode == climate::CLIMATE_FAN_MEDIUM) {
-                call.set_fan_mode(climate::CLIMATE_FAN_HIGH);
-                call.perform();
-                id(indicate_level).execute(3);
-              } else {
-                call.set_fan_mode(climate::CLIMATE_FAN_LOW);
-                call.perform();
-                id(indicate_level).execute(1);
-              }
+          - logger.log:
+              level: INFO
+              format: "Boot button clicked -> Starting Fan High Boost"
+          - script.execute: start_boost
       - min_length: 5000ms
         max_length: 15000ms
         then:

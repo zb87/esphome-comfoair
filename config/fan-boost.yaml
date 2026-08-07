@@ -1,0 +1,114 @@
+# Fan Boost package for ComfoAir
+globals:
+  - id: boost_active
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+  - id: boost_original_fan_mode
+    type: int
+    restore_value: yes
+    initial_value: '1' # CLIMATE_FAN_LOW
+
+esphome:
+  on_boot:
+    - priority: 200.0
+      then:
+        - lambda: |-
+            if (id(boost_active)) {
+              ESP_LOGW("main", "ESP32 rebooted while boost was active! Reverting fan mode to original: %d", id(boost_original_fan_mode));
+              auto target_mode = (climate::ClimateFanMode) id(boost_original_fan_mode);
+              id(boost_active) = false;
+              id(boost_status).publish_state(false);
+
+              auto call = id(comfoair_180).make_call();
+              call.set_fan_mode(target_mode);
+              call.perform();
+            }
+
+binary_sensor:
+  - platform: template
+    id: boost_status
+    name: "Fan Boost Status"
+    icon: "mdi:fan-clock"
+    device_class: running
+    lambda: |-
+      return id(boost_active);
+
+sensor:
+  - platform: template
+    id: boost_ventilation_monitor
+    internal: true
+    lambda: |-
+      return id(ventilation_level).state;
+    on_value:
+      then:
+        - lambda: |-
+            if (id(boost_active) && ((int) round(x) != 3)) {
+              ESP_LOGI("main", "Fan level changed to %d during boost. Cancelling boost.", (int) round(x));
+              id(start_boost).stop();
+              id(boost_active) = false;
+              id(boost_status).publish_state(false);
+            }
+
+number:
+  - platform: template
+    id: boost_duration_min
+    name: "Boost Duration"
+    icon: "mdi:timer-outline"
+    unit_of_measurement: "min"
+    initial_value: 30
+    min_value: 10
+    max_value: 60
+    step: 1
+    restore_value: true
+    optimistic: true
+    mode: box
+
+button:
+  - platform: template
+    id: start_boost_button
+    name: "Start Fan Boost"
+    icon: "mdi:fan-clock"
+    on_press:
+      then:
+        - script.execute: start_boost
+
+script:
+  - id: start_boost
+    mode: restart
+    then:
+      - script.stop: show_led_status
+      - script.stop: on_wifi_connect
+      - lambda: |-
+          int duration = (int) id(boost_duration_min).state;
+          if (!id(boost_active)) {
+            auto current_mode = id(comfoair_180).fan_mode.value_or(climate::CLIMATE_FAN_LOW);
+            id(boost_original_fan_mode) = (int) current_mode;
+            id(boost_active) = true;
+            id(boost_status).publish_state(true);
+            ESP_LOGI("main", "Fan Boost started (%d min). Saved original fan mode: %d", duration, (int) current_mode);
+          } else {
+            id(boost_status).publish_state(true);
+            ESP_LOGI("main", "Fan Boost already active. Extending timer (%d min, original mode: %d)", duration, id(boost_original_fan_mode));
+          }
+          auto call = id(comfoair_180).make_call();
+          call.set_fan_mode(climate::CLIMATE_FAN_HIGH);
+          call.perform();
+      - script.execute:
+          id: indicate_level
+          pulses: 3
+      - delay: !lambda "return (uint32_t) (id(boost_duration_min).state * 60000.0f);"
+      - lambda: |-
+          ESP_LOGI("main", "Fan Boost finished. Reverting fan mode to original: %d", id(boost_original_fan_mode));
+          auto target_mode = (climate::ClimateFanMode) id(boost_original_fan_mode);
+          id(boost_active) = false;
+          id(boost_status).publish_state(false);
+
+          auto call = id(comfoair_180).make_call();
+          call.set_fan_mode(target_mode);
+          call.perform();
+
+          int pulses = 1;
+          if (target_mode == climate::CLIMATE_FAN_MEDIUM) pulses = 2;
+          else if (target_mode == climate::CLIMATE_FAN_HIGH) pulses = 3;
+          id(indicate_level).execute(pulses);

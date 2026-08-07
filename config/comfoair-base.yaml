@@ -62,6 +62,7 @@ comfoair:
   # === Ventilation level ===
   ventilation_level:
     name: "Ventilation level"
+    id: ventilation_level
   supply_fan_active:
     name: "Supply fan active"
   # === Faults ===

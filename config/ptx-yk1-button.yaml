@@ -1,0 +1,16 @@
+# Optional package for PTX YK1 BLE Remote Button
+binary_sensor:
+  - platform: ptx_yk1
+    mac_address: !secret ptx_yk1_mac
+    name: "PTX YK1 Button"
+    id: ptx_yk1_button
+    on_press:
+      then:
+        - logger.log:
+            level: INFO
+            format: "PTX_YK1 BLE button clicked -> Starting Fan High Boost"
+        - homeassistant.event:
+            event: esphome.ptx_yk1_press
+            data:
+              device: "comfoair"
+        - script.execute: start_boost
