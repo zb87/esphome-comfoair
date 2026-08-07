@@ -1,0 +1,469 @@
+/* Custom ComfoAir Web UI Styles for ESPHome */
+#comfoair-custom-container {
+  max-width: 540px;
+  margin: 12px auto 20px auto;
+  padding: 0 8px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+}
+
+.comfoair-card {
+  display: block;
+  overflow: hidden;
+  background: var(--card-background-color, #1e1e24);
+  color: var(--primary-text-color, #f0f0f0);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Light Mode (System Preference Fallback) */
+@media (prefers-color-scheme: light) {
+  .comfoair-card {
+    background: var(--card-background-color, #ffffff);
+    color: var(--primary-text-color, #212121);
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Explicit Light Theme sync with ESPHome UI */
+:root[style*="color-scheme: light"] .comfoair-card,
+html[style*="color-scheme: light"] .comfoair-card,
+.comfoair-card.theme-light {
+  background: #ffffff !important;
+  color: #212121 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+:root[style*="color-scheme: light"] .arrow,
+html[style*="color-scheme: light"] .arrow,
+.comfoair-card.theme-light .arrow {
+  fill: #ffffff !important;
+}
+
+:root[style*="color-scheme: light"] .house-outline,
+html[style*="color-scheme: light"] .house-outline,
+.comfoair-card.theme-light .house-outline {
+  stroke: #212121 !important;
+  stroke-opacity: 0.35 !important;
+}
+
+:root[style*="color-scheme: light"] .house-fill,
+html[style*="color-scheme: light"] .house-fill,
+.comfoair-card.theme-light .house-fill {
+  fill: #212121 !important;
+  fill-opacity: 0.04 !important;
+}
+
+:root[style*="color-scheme: light"] .label,
+html[style*="color-scheme: light"] .label,
+:root[style*="color-scheme: light"] .fan-text,
+html[style*="color-scheme: light"] .fan-text,
+.comfoair-card.theme-light .label,
+.comfoair-card.theme-light .fan-text {
+  fill: #555555 !important;
+}
+
+:root[style*="color-scheme: light"] .fan-btn:not(.active),
+html[style*="color-scheme: light"] .fan-btn:not(.active),
+.comfoair-card.theme-light .fan-btn:not(.active) {
+  color: #424242 !important;
+}
+
+:root[style*="color-scheme: light"] .fan-buttons,
+html[style*="color-scheme: light"] .fan-buttons,
+.comfoair-card.theme-light .fan-buttons {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Explicit Dark Theme sync with ESPHome UI */
+:root[style*="color-scheme: dark"] .comfoair-card,
+html[style*="color-scheme: dark"] .comfoair-card,
+.comfoair-card.theme-dark {
+  background: #1e1e24 !important;
+  color: #f0f0f0 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+:root[style*="color-scheme: dark"] .arrow,
+html[style*="color-scheme: dark"] .arrow,
+.comfoair-card.theme-dark .arrow {
+  fill: #1e1e24 !important;
+}
+
+:root[style*="color-scheme: dark"] .house-outline,
+html[style*="color-scheme: dark"] .house-outline,
+.comfoair-card.theme-dark .house-outline {
+  stroke: #ffffff !important;
+  stroke-opacity: 0.45 !important;
+}
+
+:root[style*="color-scheme: dark"] .house-fill,
+html[style*="color-scheme: dark"] .house-fill,
+.comfoair-card.theme-dark .house-fill {
+  fill: #ffffff !important;
+  fill-opacity: 0.05 !important;
+}
+
+:root[style*="color-scheme: dark"] .label,
+html[style*="color-scheme: dark"] .label,
+:root[style*="color-scheme: dark"] .fan-text,
+html[style*="color-scheme: dark"] .fan-text,
+.comfoair-card.theme-dark .label,
+.comfoair-card.theme-dark .fan-text {
+  fill: #a0a0a0 !important;
+}
+
+:root[style*="color-scheme: dark"] .fan-btn:not(.active),
+html[style*="color-scheme: dark"] .fan-btn:not(.active),
+.comfoair-card.theme-dark .fan-btn:not(.active) {
+  color: #a0a0a0 !important;
+}
+
+:root[style*="color-scheme: dark"] .fan-buttons,
+html[style*="color-scheme: dark"] .fan-buttons,
+.comfoair-card.theme-dark .fan-buttons {
+  background: rgba(128, 128, 128, 0.12) !important;
+}
+
+/* Header Row */
+.card-header-row {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px 2px 18px;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: inherit;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title .status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #4caf50;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+}
+
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-text-color, #a0a0a0);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(128, 128, 128, 0.15);
+  transition: all 0.2s ease;
+}
+
+.header-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.clickable:hover {
+  opacity: 0.8;
+}
+
+/* SVG Diagram Wrapper */
+.diagram-wrapper {
+  position: relative;
+  z-index: 1;
+  margin-top: -6px;
+  padding: 0 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* House Outline & SVG Elements */
+.house-fill {
+  fill: currentColor;
+  fill-opacity: 0.05;
+}
+
+.house-outline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-opacity: 0.45;
+  stroke-linejoin: round;
+}
+
+.label {
+  fill: var(--secondary-text-color, #a0a0a0);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.temp-text {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.fan-text {
+  fill: var(--secondary-text-color, #a0a0a0);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+/* Badges */
+.filter-badge-bg {
+  fill: #f44336;
+}
+
+.filter-badge-text {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.bypass-badge-bg {
+  fill: #ff9800;
+}
+
+.bypass-badge-text {
+  fill: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Ducts & Flow Arrows */
+.duct {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.arrow {
+  fill: #1e1e24;
+  stroke: none;
+  opacity: 0.85;
+}
+
+/* Controls Bar */
+.controls-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 16px 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Grid layout for fan buttons so they fit on any screen without overflowing */
+.fan-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  background: rgba(128, 128, 128, 0.12);
+  padding: 4px;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fan-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--secondary-text-color, #a0a0a0);
+  padding: 8px 6px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fan-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.fan-btn:hover:not(.active) {
+  color: var(--primary-text-color, inherit);
+  background: rgba(128, 128, 128, 0.18);
+}
+
+/* Active Selected Button Styling with High Contrast */
+.fan-btn.active,
+.fan-btn.active span,
+.fan-btn.active svg,
+:root[style*="color-scheme: light"] .fan-btn.active,
+:root[style*="color-scheme: light"] .fan-btn.active span,
+:root[style*="color-scheme: light"] .fan-btn.active svg,
+html[style*="color-scheme: light"] .fan-btn.active,
+html[style*="color-scheme: light"] .fan-btn.active span,
+html[style*="color-scheme: light"] .fan-btn.active svg,
+.comfoair-card.theme-light .fan-btn.active,
+.comfoair-card.theme-light .fan-btn.active span,
+.comfoair-card.theme-light .fan-btn.active svg,
+:root[style*="color-scheme: dark"] .fan-btn.active,
+:root[style*="color-scheme: dark"] .fan-btn.active span,
+:root[style*="color-scheme: dark"] .fan-btn.active svg,
+html[style*="color-scheme: dark"] .fan-btn.active,
+html[style*="color-scheme: dark"] .fan-btn.active span,
+html[style*="color-scheme: dark"] .fan-btn.active svg,
+.comfoair-card.theme-dark .fan-btn.active,
+.comfoair-card.theme-dark .fan-btn.active span,
+.comfoair-card.theme-dark .fan-btn.active svg {
+  background: #0288d1 !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 136, 209, 0.35);
+}
+
+/* Action row for Boost */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(128, 128, 128, 0.12);
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  color: var(--primary-text-color, inherit);
+  padding: 7px 16px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.action-btn:hover {
+  background: rgba(128, 128, 128, 0.22);
+}
+
+.action-btn.boost-active,
+.action-btn.boost-active span,
+.action-btn.boost-active svg {
+  background: #e65100 !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  border-color: #e65100 !important;
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(230, 81, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0); }
+}
+
+/* Mobile responsive styles (< 480px) */
+@media (max-width: 480px) {
+  #comfoair-custom-container {
+    margin: 6px auto 14px auto;
+    padding: 0 4px;
+  }
+
+  .card-header-row {
+    padding: 10px 14px 0 14px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
+
+  .controls-bar {
+    padding: 4px 10px 12px 10px;
+    gap: 8px;
+  }
+
+  .fan-buttons {
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .fan-btn {
+    padding: 7px 4px;
+    font-size: 0.78rem;
+    gap: 4px;
+  }
+
+  .fan-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .action-btn {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Extremely narrow mobile screens (< 360px) */
+@media (max-width: 360px) {
+  .fan-btn span {
+    font-size: 0.72rem;
+  }
+  .fan-btn {
+    padding: 6px 2px;
+    gap: 2px;
+  }
+}
