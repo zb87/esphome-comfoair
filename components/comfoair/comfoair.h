@@ -575,19 +575,19 @@ protected:
   }
 
   // --- Deduplication helpers ---
-  // Only publish if the new value differs from the current state.
+  // Only publish if the new value differs from the current state (or if no state has been published yet).
   static void publish_if_changed_(sensor::Sensor *s, float value) {
-    if (s != nullptr && s->state != value) {
+    if (s != nullptr && (!s->has_state() || s->state != value)) {
       s->publish_state(value);
     }
   }
   static void publish_if_changed_(binary_sensor::BinarySensor *s, bool value) {
-    if (s != nullptr && s->state != value) {
+    if (s != nullptr && (!s->has_state() || s->state != value)) {
       s->publish_state(value);
     }
   }
   static void publish_if_changed_(text_sensor::TextSensor *s, const std::string &value) {
-    if (s != nullptr && s->state != value) {
+    if (s != nullptr && (!s->has_state() || s->state != value)) {
       s->publish_state(value);
     }
   }
