@@ -1,0 +1,64 @@
+# Optional package for PTX YK1 BLE Remote Button (Xiaomi BLE mode)
+#
+# This button uses the MiBeacon V5 protocol with AES-CCM encryption.
+# You need to provide a 32-character hex bindkey to decrypt the events.
+#
+# Secrets required:
+#   ptx_yk1_xiaomi_mac: "A4:C1:38:B1:35:67"
+#   ptx_yk1_xiaomi_bindkey: "0123456789abcdef0123456789abcdef"
+#
+
+# Expose as an Event Entity in Home Assistant (shows up in the "Events" UI card)
+event:
+  - platform: template
+    name: "PTX YK1 Button"
+    id: ptx_yk1_event
+    device_class: button
+    event_types:
+      - press
+      - double_press
+      - long_press
+
+ptx_yk1_xiaomi:
+  mac_address: !secret ptx_yk1_xiaomi_mac
+  bindkey: !secret ptx_yk1_xiaomi_bindkey
+  on_press:
+    then:
+      - logger.log:
+          level: INFO
+          format: "PTX YK1 Xiaomi: Press -> Starting Fan High Boost"
+      - event.trigger:
+          id: ptx_yk1_event
+          event_type: "press"
+      - homeassistant.event:
+          event: esphome.ptx_yk1_press
+          data:
+            device: "comfoair"
+            action: "press"
+      - script.execute: start_boost
+  on_double_press:
+    then:
+      - logger.log:
+          level: INFO
+          format: "PTX YK1 Xiaomi: Double press"
+      - event.trigger:
+          id: ptx_yk1_event
+          event_type: "double_press"
+      - homeassistant.event:
+          event: esphome.ptx_yk1_press
+          data:
+            device: "comfoair"
+            action: "double_press"
+  on_long_press:
+    then:
+      - logger.log:
+          level: INFO
+          format: "PTX YK1 Xiaomi: Long press"
+      - event.trigger:
+          id: ptx_yk1_event
+          event_type: "long_press"
+      - homeassistant.event:
+          event: esphome.ptx_yk1_press
+          data:
+            device: "comfoair"
+            action: "long_press"

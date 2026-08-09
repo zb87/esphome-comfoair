@@ -12,6 +12,7 @@ packages:
   fan_boost: !include config/fan-boost.yaml
   # Optional packages
   # ptx_yk1_button: !include config/ptx-yk1-button.yaml
+  # ptx_yk1_xiaomi_button: !include config/ptx-yk1-xiaomi-button.yaml
   # with_private_wifi: !include config/base-with-preset-wifi.yaml
   # debug: !include config/debug.yaml
   # debug_psram: !include config/debug-psram.yaml
