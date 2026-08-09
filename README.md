@@ -128,6 +128,25 @@ If you have a PTX_YK1 BLE wireless button:
    ptx_yk1_mac: "A4:C1:38:F6:E2:A4"
    ```
 
+### Optional: Tailscale VPN (`config/tailscale.yaml`)
+*Note: This package is **optional and not included by default**.* Powered by [esphome-tailscale](https://github.com/Csontikka/esphome-tailscale).
+
+Allows your ComfoAir ESP32-S3 to join your Tailscale tailnet directly as a native node with its own `100.x.y.z` IP address (requires ESP32-S3 with PSRAM, such as the default `n16r8` board):
+
+1. Generate a reusable Tailscale auth key (`tskey-auth-...`) from the [Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys).
+2. Open `secrets.yaml` and add your auth key:
+   ```yaml
+   tailscale_auth_key: "tskey-auth-xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ```
+3. Open `comfoair.yaml` and uncomment the Tailscale package:
+   ```yaml
+   packages:
+     ...
+     tailscale: !include config/tailscale.yaml
+   ```
+4. Flash the firmware to your device. Once registered on your tailnet, open the Tailscale Admin Console -> **Machines** -> click `⋯` next to your device and select **Disable key expiry** so the node key remains valid permanently.
+
+
 ---
 
 ## Credits

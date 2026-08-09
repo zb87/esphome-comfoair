@@ -1,0 +1,2 @@
+esphome:
+  name_add_mac_suffix: true

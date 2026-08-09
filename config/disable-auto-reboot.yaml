@@ -1,0 +1,3 @@
+api:
+  # Disable auto reboot in case no clients connect to the API.
+  reboot_timeout: 0s

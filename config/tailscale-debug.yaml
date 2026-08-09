@@ -1,0 +1,88 @@
+binary_sensor:
+  - platform: tailscale
+    key_expiry_warning:
+      name: "VPN Node Key Expiry Warning"
+      icon: mdi:key-alert
+      id: tailscale_key_expiry_warning
+    vpn_auto_rollback:
+      name: "VPN Auto-Rollback"
+      icon: mdi:backup-restore
+      id: tailscale_vpn_auto_rollback
+
+text_sensor:
+  - platform: tailscale
+    vpn_hostname:
+      name: "VPN Hostname"
+      icon: mdi:rename-box
+      id: tailscale_vpn_hostname
+    memory_mode:
+      name: "Device Memory"
+      icon: mdi:memory
+      id: tailscale_memory_mode
+    setup_status:
+      name: "VPN Setup Hint"
+      icon: mdi:lightbulb-on-outline
+      id: tailscale_setup_status
+    magicdns:
+      name: "VPN MagicDNS"
+      icon: mdi:dns
+      id: tailscale_magicdns
+    network_name:
+      name: "VPN Network"
+      icon: mdi:network-outline
+      id: tailscale_network_name
+    key_expiry:
+      name: "VPN Node Key Expiry"
+      icon: mdi:calendar-clock
+      id: tailscale_key_expiry
+    control_plane:
+      name: "VPN Control Plane"
+      icon: mdi:cloud-cog-outline
+      id: tailscale_control_plane
+    login_server:
+      name: "VPN Login Server"
+      icon: mdi:login-variant
+      id: tailscale_login_server
+    auth_key_status:
+      name: "VPN Auth Key Source"
+      icon: mdi:shield-key-outline
+      id: tailscale_auth_key_status
+
+sensor:
+  - platform: tailscale
+    peers_online:
+      name: "VPN Peers Online"
+      icon: mdi:account-network
+      id: tailscale_peers_online
+    peers_direct:
+      name: "VPN Peers Direct"
+      icon: mdi:lan-connect
+      id: tailscale_peers_direct
+    peers_derp:
+      name: "VPN Peers DERP"
+      icon: mdi:server-network
+      id: tailscale_peers_derp
+    peers_max:
+      name: "VPN Peers Max"
+      icon: mdi:account-multiple
+      id: tailscale_peers_max
+    uptime:
+      name: "VPN Uptime"
+      icon: mdi:timer-outline
+      id: tailscale_uptime
+    connections:
+      name: "VPN Connect Count"
+      icon: mdi:counter
+      id: tailscale_connections
+
+switch:
+  - platform: tailscale
+    vpn_enabled:
+      name: "VPN Enabled"
+      icon: mdi:vpn
+      id: tailscale_vpn_enabled
+    debug_log:
+      name: "VPN Debug Log"
+      icon: mdi:bug-outline
+      id: tailscale_debug_log
+      restore_mode: RESTORE_DEFAULT_OFF

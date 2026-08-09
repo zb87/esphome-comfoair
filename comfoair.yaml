@@ -11,9 +11,13 @@ packages:
   led_status: !include config/led-status.yaml
   fan_boost: !include config/fan-boost.yaml
   # Optional packages
+  # with_mac_suffix: !include config/with_mac_suffix.yaml
+  # disable_auto_reboot: !include config/disable_auto_reboot.yaml
+  # tailscale: !include config/tailscale.yaml
+  # tailscale_debug: !include config/tailscale-debug.yaml
   # ptx_yk1_button: !include config/ptx-yk1-button.yaml
   # ptx_yk1_xiaomi_button: !include config/ptx-yk1-xiaomi-button.yaml
-  # with_private_wifi: !include config/base-with-preset-wifi.yaml
+  # with_preset_wifi: !include config/base-with-preset-wifi.yaml
   # debug: !include config/debug.yaml
   # debug_psram: !include config/debug-psram.yaml
 

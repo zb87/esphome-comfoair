@@ -1,0 +1,66 @@
+# Tailscale VPN config module
+# https://github.com/Csontikka/esphome-tailscale
+
+esp32:
+  framework:
+    sdkconfig_options:
+      CONFIG_LWIP_TCPIP_TASK_STACK_SIZE: "6144"
+      CONFIG_LWIP_CHECK_THREAD_SAFETY: y
+      CONFIG_LWIP_TCPIP_CORE_LOCKING: n
+      CONFIG_ML_DEVICE_NAME: '"${name}"'
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/Csontikka/esphome-tailscale.git
+      ref: main
+    components: [tailscale]
+    refresh: 0s
+
+tailscale:
+  auth_key: !secret tailscale_auth_key
+
+binary_sensor:
+  - platform: tailscale
+    connected:
+      name: "VPN Connected"
+      icon: mdi:shield-check
+      id: tailscale_connected
+    ha_connected:
+      name: "HA API Connected"
+      icon: mdi:home-assistant
+      id: tailscale_ha_connected
+
+text_sensor:
+  - platform: tailscale
+    ip_address:
+      name: "VPN IP"
+      icon: mdi:ip-network
+      id: tailscale_ip_address
+    peer_status:
+      name: "VPN Peer Status"
+      icon: mdi:lan
+      id: tailscale_peer_status
+    ha_connection_route:
+      name: "HA API Connection Route"
+      icon: mdi:routes
+      id: tailscale_ha_connection_route
+    ha_connection_ip:
+      name: "HA API Connection IP"
+      icon: mdi:ip-network-outline
+      id: tailscale_ha_connection_ip
+
+text:
+  - platform: tailscale
+    auth_key:
+      name: "VPN Auth Key Override"
+      icon: mdi:key-variant
+      id: tailscale_auth_key_override
+      mode: password
+
+button:
+  - platform: tailscale
+    reconnect:
+      name: "VPN Reconnect"
+      icon: mdi:connection
+      id: tailscale_reconnect
