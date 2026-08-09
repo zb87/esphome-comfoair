@@ -2,7 +2,7 @@ esp32_ble_tracker:
   scan_parameters:
     interval: 320ms    # How often a scan cycle starts (default: 320ms)
     window: 280ms      # How long the radio actively listens per cycle (default: 30ms)
-    active: true       # Send scan requests for more device info (default: true)
+    active: false      # Send scan requests for more device info (default: true)
 
 bluetooth_proxy:
   active: true
