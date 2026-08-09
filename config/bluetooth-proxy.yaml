@@ -1,9 +1,8 @@
 esp32_ble_tracker:
   scan_parameters:
-    # We currently use the defaults to ensure Bluetooth
-    # can co-exist with WiFi In the future we may be able to
-    # enable the built-in coexistence logic in ESP-IDF
-    active: true
+    interval: 320ms    # How often a scan cycle starts (default: 320ms)
+    window: 280ms      # How long the radio actively listens per cycle (default: 30ms)
+    active: true       # Send scan requests for more device info (default: true)
 
 bluetooth_proxy:
   active: true
