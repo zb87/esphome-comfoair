@@ -10,8 +10,11 @@ static const char *const TAG = "ptx_yk1";
 
 void PTXYK1Device::dump_config() {
   LOG_BINARY_SENSOR("", "PTX YK1", this);
-  ESP_LOGCONFIG(TAG, "  MAC Address: %s", std::string(esp32_ble_tracker::ESPBTAddr(this->address_).str()).c_str());
-  ESP_LOGCONFIG(TAG, "  BLE Timeout: %u ms", this->timeout_ms_);
+  ESP_LOGCONFIG(TAG, "  MAC Address: %02X:%02X:%02X:%02X:%02X:%02X",
+                (uint8_t)(this->address_ >> 40), (uint8_t)(this->address_ >> 32),
+                (uint8_t)(this->address_ >> 24), (uint8_t)(this->address_ >> 16),
+                (uint8_t)(this->address_ >> 8), (uint8_t)(this->address_));
+  ESP_LOGCONFIG(TAG, "  BLE Timeout: %" PRIu32 " ms", this->timeout_ms_);
 }
 
 void PTXYK1Device::loop() {
