@@ -292,7 +292,7 @@ void PTXYK1XiaomiDevice::process_button_event_(const uint8_t *data, size_t size)
       case 0x560C:
       case 0x480C:
         ESP_LOGI(TAG, "Press (object 0x%04X)", obj_id);
-        this->press_callback_.call();
+        this->defer([this]() { this->press_callback_.call(); });
         event_fired = true;
         break;
 
@@ -302,7 +302,7 @@ void PTXYK1XiaomiDevice::process_button_event_(const uint8_t *data, size_t size)
       case 0x560D:
       case 0x480D:
         ESP_LOGI(TAG, "Double press (object 0x%04X)", obj_id);
-        this->double_press_callback_.call();
+        this->defer([this]() { this->double_press_callback_.call(); });
         event_fired = true;
         break;
 
@@ -312,7 +312,7 @@ void PTXYK1XiaomiDevice::process_button_event_(const uint8_t *data, size_t size)
       case 0x560E:
       case 0x480E:
         ESP_LOGI(TAG, "Long press (object 0x%04X)", obj_id);
-        this->long_press_callback_.call();
+        this->defer([this]() { this->long_press_callback_.call(); });
         event_fired = true;
         break;
 
@@ -326,17 +326,17 @@ void PTXYK1XiaomiDevice::process_button_event_(const uint8_t *data, size_t size)
           switch (press_type) {
             case 0:
               ESP_LOGI(TAG, "Press (0x1001)");
-              this->press_callback_.call();
+              this->defer([this]() { this->press_callback_.call(); });
               event_fired = true;
               break;
             case 1:
               ESP_LOGI(TAG, "Double press (0x1001)");
-              this->double_press_callback_.call();
+              this->defer([this]() { this->double_press_callback_.call(); });
               event_fired = true;
               break;
             case 2:
               ESP_LOGI(TAG, "Long press (0x1001)");
-              this->long_press_callback_.call();
+              this->defer([this]() { this->long_press_callback_.call(); });
               event_fired = true;
               break;
             default:
