@@ -11,8 +11,9 @@ packages:
   led_status: !include config/led-status.yaml
   fan_boost: !include config/fan-boost.yaml
   # Optional packages
-  # with_mac_suffix: !include config/with_mac_suffix.yaml
-  # disable_auto_reboot: !include config/disable_auto_reboot.yaml
+  # with_mac_suffix: !include config/with-mac-suffix.yaml
+  # disable_auto_reboot: !include config/disable-auto-reboot.yaml
+  # wireguard: !include config/wireguard.yaml
   # tailscale: !include config/tailscale.yaml
   # tailscale_debug: !include config/tailscale-debug.yaml
   # ptx_yk1_button: !include config/ptx-yk1-button.yaml

@@ -1,0 +1,16 @@
+wireguard:
+  address: !secret wg_ip_address
+  netmask: 255.255.255.0
+  private_key: !secret wg_esphome_privkey
+  peer_endpoint: !secret peer_endpoint
+  peer_port: 51820
+  peer_public_key: !secret peer_public_key
+  peer_allowed_ips:
+    - 10.10.0.0/24
+  peer_persistent_keepalive: 25s # Essential for NAT traversal behind remote routers
+  reboot_timeout: 0s # Disable auto reboot in case cannot connect to the WireGuard peer.
+
+binary_sensor:
+  - platform: wireguard
+    status:
+      name: 'WireGuard Status'
