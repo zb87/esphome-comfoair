@@ -4,6 +4,3 @@ esp32:
   flash_size: 16MB
   framework:
     type: esp-idf
-
-psram:
-  mode: octal
