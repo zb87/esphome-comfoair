@@ -312,6 +312,30 @@ CONFIG_SCHEMA = cv.All(
     .extend(climate.climate_schema(ComfoAirComponent))
 )
 
+_UART_SCHEMA = uart.final_validate_device_schema(
+    "comfoair",
+    baud_rate=9600,
+    require_tx=True,
+    require_rx=True,
+)
+_PROXY_UART_SCHEMA = uart.final_validate_device_schema(
+    "comfoair",
+    uart_bus=CONF_PROXY_UART_ID,
+    baud_rate=9600,
+    require_tx=True,
+    require_rx=True,
+)
+
+
+def _final_validate(config):
+    _UART_SCHEMA(config)
+    if CONF_PROXY_UART_ID in config:
+        _PROXY_UART_SCHEMA(config)
+    return config
+
+
+FINAL_VALIDATE_SCHEMA = _final_validate
+
 
 async def to_code(config):
     """Generates code"""
