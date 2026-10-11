@@ -4,10 +4,10 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import binary_sensor, climate, sensor, text_sensor, uart
 from esphome.const import (CONF_ID, CONF_UART_ID, DEVICE_CLASS_CURRENT,
-                           DEVICE_CLASS_EMPTY, DEVICE_CLASS_SPEED,
-                           DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_VOLUME,
+                           DEVICE_CLASS_EMPTY, DEVICE_CLASS_TEMPERATURE,
+                           ICON_EMPTY, ICON_FAN,
                            STATE_CLASS_MEASUREMENT, UNIT_AMPERE, UNIT_CELSIUS,
-                           UNIT_CUBIC_METER, UNIT_HOUR, UNIT_MINUTE,
+                           UNIT_HOUR, UNIT_MINUTE,
                            UNIT_PERCENT, UNIT_REVOLUTIONS_PER_MINUTE)
 
 comfoair_ns = cg.esphome_ns.namespace("comfoair")
@@ -192,6 +192,7 @@ def make_sensor_schema(
     unit_of_measurement=None,
     accuracy_decimals=0,
     state_class=STATE_CLASS_MEASUREMENT,
+    icon=ICON_EMPTY,
 ):
     kwargs = {
         "device_class": device_class,
@@ -200,6 +201,8 @@ def make_sensor_schema(
     }
     if unit_of_measurement is not None:
         kwargs["unit_of_measurement"] = unit_of_measurement
+    if icon:
+        kwargs["icon"] = icon
     return sensor.sensor_schema(**kwargs).extend()
 
 
@@ -215,11 +218,11 @@ comfoair_sensors_schemas = cv.Schema(
         cv.Optional(CONF_FROST_PROTECTION_LEVEL): text_sensor.text_sensor_schema(),
         cv.Optional(CONF_PREHEATING_VALVE): text_sensor.text_sensor_schema(),
 
-        cv.Optional(CONF_INTAKE_FAN_SPEED): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT),
-        cv.Optional(CONF_EXHAUST_FAN_SPEED): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_PERCENT),
-        cv.Optional(CONF_INTAKE_FAN_SPEED_RPM): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE),
-        cv.Optional(CONF_EXHAUST_FAN_SPEED_RPM): make_sensor_schema(device_class=DEVICE_CLASS_SPEED, unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE),
-        cv.Optional(CONF_VENTILATION_LEVEL): make_sensor_schema(),
+        cv.Optional(CONF_INTAKE_FAN_SPEED): make_sensor_schema(unit_of_measurement=UNIT_PERCENT, icon=ICON_FAN),
+        cv.Optional(CONF_EXHAUST_FAN_SPEED): make_sensor_schema(unit_of_measurement=UNIT_PERCENT, icon=ICON_FAN),
+        cv.Optional(CONF_INTAKE_FAN_SPEED_RPM): make_sensor_schema(unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, icon=ICON_FAN),
+        cv.Optional(CONF_EXHAUST_FAN_SPEED_RPM): make_sensor_schema(unit_of_measurement=UNIT_REVOLUTIONS_PER_MINUTE, icon=ICON_FAN),
+        cv.Optional(CONF_VENTILATION_LEVEL): make_sensor_schema(icon=ICON_FAN),
         cv.Optional(CONF_OUTSIDE_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
         cv.Optional(CONF_SUPPLY_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
         cv.Optional(CONF_RETURN_AIR_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
@@ -228,11 +231,11 @@ comfoair_sensors_schemas = cv.Schema(
         cv.Optional(CONF_EWT_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
         cv.Optional(CONF_REHEATING_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
         cv.Optional(CONF_KITCHEN_HOOD_TEMPERATURE): make_sensor_schema(device_class=DEVICE_CLASS_TEMPERATURE, unit_of_measurement=UNIT_CELSIUS, accuracy_decimals=1),
-        cv.Optional(CONF_RETURN_AIR_LEVEL): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=1),
-        cv.Optional(CONF_SUPPLY_AIR_LEVEL): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_CUBIC_METER, accuracy_decimals=1),
-        cv.Optional(CONF_BYPASS_FACTOR): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME),
-        cv.Optional(CONF_BYPASS_STEP): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME),
-        cv.Optional(CONF_BYPASS_CORRECTION): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME),
+        cv.Optional(CONF_RETURN_AIR_LEVEL): make_sensor_schema(unit_of_measurement=UNIT_PERCENT, icon=ICON_FAN),
+        cv.Optional(CONF_SUPPLY_AIR_LEVEL): make_sensor_schema(unit_of_measurement=UNIT_PERCENT, icon=ICON_FAN),
+        cv.Optional(CONF_BYPASS_FACTOR): make_sensor_schema(),
+        cv.Optional(CONF_BYPASS_STEP): make_sensor_schema(),
+        cv.Optional(CONF_BYPASS_CORRECTION): make_sensor_schema(),
         cv.Optional(CONF_BYPASS_OPEN_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
         cv.Optional(CONF_MOTOR_CURRENT_BYPASS): make_sensor_schema(device_class=DEVICE_CLASS_CURRENT, unit_of_measurement=UNIT_AMPERE, accuracy_decimals=1),
         cv.Optional(CONF_MOTOR_CURRENT_PREHEATING): make_sensor_schema(device_class=DEVICE_CLASS_CURRENT, unit_of_measurement=UNIT_AMPERE, accuracy_decimals=1),
@@ -246,7 +249,7 @@ comfoair_sensors_schemas = cv.Schema(
         cv.Optional(CONF_FROST_PROTECTION_MINUTES): make_sensor_schema(unit_of_measurement=UNIT_MINUTE),
         cv.Optional(CONF_FILTER_HOURS): make_sensor_schema(unit_of_measurement=UNIT_HOUR),
 
-        cv.Optional(CONF_BYPASS_VALVE): make_sensor_schema(device_class=DEVICE_CLASS_VOLUME, unit_of_measurement=UNIT_PERCENT),
+        cv.Optional(CONF_BYPASS_VALVE): make_sensor_schema(unit_of_measurement=UNIT_PERCENT, icon="mdi:pipe-valve"),
 
         cv.Optional(CONF_BATHROOM_SWITCH_ON_DELAY_MINUTES): make_sensor_schema(),
         cv.Optional(CONF_BATHROOM_SWITCH_OFF_DELAY_MINUTES): make_sensor_schema(),
